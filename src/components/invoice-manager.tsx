@@ -54,7 +54,7 @@ export function InvoiceManager() {
     </form>
     <section className="space-y-3"><h2 className="font-semibold">Invoice register</h2>
       {invoices.map(i => <article key={i.id} className="card flex flex-wrap justify-between gap-3 p-5">
-        <div><p className="font-semibold">{i.invoiceNumber}</p><p className="mt-1 text-xs text-slate-500">{i.user.name} · {i.user.email}</p><p className="mt-1 text-xs text-violet-300">{i.status}</p><Link className="mt-2 inline-block text-xs text-cyan-300" href={`/portal/invoices/${i.id}`}>View printable invoice ↗</Link></div>
+        <div><p className="font-semibold">{i.invoiceNumber}</p><p className="mt-1 text-xs text-slate-500">{i.user.name} · {i.user.email}</p><p className="mt-1 text-xs text-cyan-300">{i.status}</p><Link className="mt-2 inline-block text-xs text-cyan-300" href={`/portal/invoices/${i.id}`}>View printable invoice ↗</Link></div>
         <div className="text-right"><p className="font-semibold">{new Intl.NumberFormat("en-US", { style: "currency", currency: i.currency.toUpperCase() }).format(i.totalCents / 100)}</p>
           <div className="mt-3 flex flex-wrap justify-end gap-2">
             {i.status === "DRAFT" && <button disabled={busy} onClick={() => void setStatus(i, "SENT")} className="btn-secondary">Mark sent</button>}

@@ -60,7 +60,7 @@ export function BusinessAnalytics() {
               <span className="text-slate-400">{monthLabel(row.month)}</span>
               <div className="h-3 overflow-hidden rounded-full bg-white/10">
                 <div className="flex h-full" style={{ width: `${Math.max(0, row.grossCents / max * 100)}%` }}>
-                  <div className="h-full bg-violet-400" style={{ width: row.grossCents ? `${Math.max(0, row.netCents / row.grossCents * 100)}%` : "0%" }}/>
+                  <div className="h-full bg-cyan-400" style={{ width: row.grossCents ? `${Math.max(0, row.netCents / row.grossCents * 100)}%` : "0%" }}/>
                   <div className="h-full bg-amber-400" style={{ width: row.grossCents ? `${Math.min(100, row.refundedCents / row.grossCents * 100)}%` : "0%" }}/>
                 </div>
               </div>

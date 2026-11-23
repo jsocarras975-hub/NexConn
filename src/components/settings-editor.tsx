@@ -1,6 +1,6 @@
 "use client";
 import { useEffect,useState } from "react";
-const defaults={company_name:"NEXCON",support_email:"",default_currency:"USD",maintenance_notice:""};
+const defaults={company_name:"N3xUs Konc3pt'z",support_email:"",default_currency:"USD",maintenance_notice:""};
 export function SettingsEditor(){const [values,setValues]=useState(defaults);const [busy,setBusy]=useState(false);const [notice,setNotice]=useState("");const [error,setError]=useState("");
  useEffect(()=>{fetch("/api/admin/settings").then(r=>r.ok?r.json():{settings:[]}).then(d=>{const next={...defaults};for(const s of d.settings||[])if(s.key in next)(next as any)[s.key]=s.value;setValues(next);});},[]);
  async function save(key:keyof typeof defaults){setBusy(true);setNotice("");setError("");try{const r=await fetch("/api/admin/settings",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,value:values[key]})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Save failed.");setNotice(`${key.replaceAll("_"," ")} saved.`);}catch(e){setError(e instanceof Error?e.message:"Save failed.");}finally{setBusy(false);}}

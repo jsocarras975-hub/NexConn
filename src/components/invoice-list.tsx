@@ -9,7 +9,7 @@ export function InvoiceList() {
     {items.map(i => <article key={i.id} className="card p-6">
       <div className="flex flex-wrap justify-between gap-3">
         <div><h2 className="font-semibold">{i.invoiceNumber}</h2><p className="mt-1 text-xs text-slate-500">Issued {new Date(i.createdAt).toLocaleDateString()} {i.dueAt ? `· Due ${new Date(i.dueAt).toLocaleDateString()}` : ""}</p></div>
-        <div className="text-right"><p className="font-semibold">{new Intl.NumberFormat("en-US", { style: "currency", currency: i.currency.toUpperCase() }).format(i.totalCents / 100)}</p><p className="mt-1 text-xs text-violet-300">{i.status}</p></div>
+        <div className="text-right"><p className="font-semibold">{new Intl.NumberFormat("en-US", { style: "currency", currency: i.currency.toUpperCase() }).format(i.totalCents / 100)}</p><p className="mt-1 text-xs text-cyan-300">{i.status}</p></div>
       </div>
       <div className="mt-4 border-t border-white/10 pt-3 text-sm text-slate-400">{i.items.map(x => <p key={x.id}>{x.quantity} × {x.description}</p>)}</div>
       <Link href={`/portal/invoices/${i.id}`} className="btn-secondary mt-4 inline-flex">View / print invoice</Link>

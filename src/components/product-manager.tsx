@@ -121,13 +121,13 @@ export function ProductManager() {
         {items.map((product) => (
           <article key={product.id} className="card flex flex-wrap items-center justify-between gap-4 p-5">
             <div className="flex min-w-0 items-center gap-3">
-              {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-14 w-14 rounded-xl object-cover"/> : <div className="grid h-14 w-14 place-items-center rounded-xl bg-white/[0.04] text-xl text-violet-300">◇</div>}
+              {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-14 w-14 rounded-xl object-cover"/> : <div className="grid h-14 w-14 place-items-center rounded-xl bg-white/[0.04] text-xl text-cyan-300">◇</div>}
               <div className="min-w-0">
                 <p className="font-semibold">{product.name}</p>
                 <p className="mt-1 break-all text-xs text-slate-500">/{product.slug} · {(product.priceCents / 100).toFixed(2)} {product.currency.toUpperCase()}</p>
                 <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
                   <span className={product.active ? "text-emerald-300" : "text-slate-500"}>{product.active ? "Published" : "Draft"}</span>
-                  {product.featured && <span className="text-violet-300">Featured</span>}
+                  {product.featured && <span className="text-cyan-300">Featured</span>}
                   <span className={product.hasPrivateFile ? "text-cyan-300" : "text-slate-500"}>{product.hasPrivateFile ? "Private file attached" : "No private file"}</span>
                 </div>
               </div>

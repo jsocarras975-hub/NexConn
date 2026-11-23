@@ -40,7 +40,7 @@ export function CartPage() {
   }
 
   if(!ready)return <div className="card p-8 text-sm text-slate-400">Loading your cart…</div>;
-  if(!items.length)return <div className="card px-6 py-14 text-center"><ShoppingBag className="mx-auto text-violet-300" size={34}/><h2 className="mt-5 text-xl font-semibold">Your cart is taking a breather.</h2><p className="mt-2 text-sm text-slate-400">Browse the marketplace and add something useful.</p><Link href="/marketplace" className="btn-primary mt-6">Explore marketplace</Link></div>;
+  if(!items.length)return <div className="card px-6 py-14 text-center"><ShoppingBag className="mx-auto text-cyan-300" size={34}/><h2 className="mt-5 text-xl font-semibold">Your cart is taking a breather.</h2><p className="mt-2 text-sm text-slate-400">Browse the marketplace and add something useful.</p><Link href="/marketplace" className="btn-primary mt-6">Explore marketplace</Link></div>;
 
   return <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
     <div className="space-y-3">{items.map(item=><article key={item.productId} className="card flex flex-wrap items-center justify-between gap-4 p-5">

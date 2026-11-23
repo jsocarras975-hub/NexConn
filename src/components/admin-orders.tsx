@@ -70,7 +70,7 @@ export function AdminOrders() {
             </div>
             <div className="text-right">
               <p className="font-semibold">{amount(order.totalCents, order.currency)}</p>
-              <p className="mt-1 text-xs text-violet-300">{order.status}</p>
+              <p className="mt-1 text-xs text-cyan-300">{order.status}</p>
             </div>
           </div>
           <ul className="mt-4 space-y-1 border-t border-white/10 pt-3 text-sm text-slate-300">
