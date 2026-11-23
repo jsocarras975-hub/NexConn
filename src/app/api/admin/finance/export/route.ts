@@ -54,7 +54,7 @@ export async function GET() {
     headers: {
       ...headers,
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="nexcon-finance-export-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="n3xus-konc3ptz-finance-export-${new Date().toISOString().slice(0, 10)}.csv"`,
     },
   });
 }

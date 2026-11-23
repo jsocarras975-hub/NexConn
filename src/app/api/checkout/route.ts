@@ -100,7 +100,7 @@ export async function POST(req: Request) {
       cancel_url: `${process.env.APP_URL}/marketplace?checkout=cancelled`,
     }, {
       // Stable per-order key prevents duplicate Stripe sessions on safe retries.
-      idempotencyKey: `nexcon-checkout-${order.id}`,
+      idempotencyKey: `n3xus-checkout-${order.id}`,
     });
 
     await prisma.order.update({

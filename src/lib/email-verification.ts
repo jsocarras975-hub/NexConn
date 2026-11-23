@@ -39,8 +39,8 @@ export async function sendVerificationEmail(user: {
 
   const sent = await sendEmail({
     to: user.email,
-    subject: "Verify your NEXCON account",
-    html: `<p>Hi ${user.name.replace(/[&<>"]/g, "")},</p><p>Thanks for creating a NEXCON account. Please confirm your email address:</p><p><a href="${verifyUrl.toString()}">Verify my email</a></p><p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>`,
+    subject: "Verify your N3xUs Konc3pt'z account",
+    html: `<p>Hi ${user.name.replace(/[&<>"]/g, "")},</p><p>Thanks for creating a N3xUs Konc3pt'z account. Please confirm your email address:</p><p><a href="${verifyUrl.toString()}">Verify my email</a></p><p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>`,
   });
 
   if (!sent.sent) {

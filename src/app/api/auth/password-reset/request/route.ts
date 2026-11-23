@@ -55,8 +55,8 @@ export async function POST(req: Request) {
   resetUrl.searchParams.set("token", rawToken);
   const sent = await sendEmail({
     to: user.email,
-    subject: "Reset your NEXCON password",
-    html: `<p>A password reset was requested for your NEXCON account.</p><p><a href="${resetUrl.toString()}">Reset your password</a></p><p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`,
+    subject: "Reset your N3xUs Konc3pt'z password",
+    html: `<p>A password reset was requested for your N3xUs Konc3pt'z account.</p><p><a href="${resetUrl.toString()}">Reset your password</a></p><p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`,
   });
 
   if (!sent.sent) {

@@ -43,7 +43,7 @@ export async function enforceRateLimit(
   // run unlimited because a variable was forgotten in Vercel.
   if (!url || !token) {
     if (process.env.NODE_ENV === "production") {
-      console.error("NEXCON rate limiting is not configured.");
+      console.error("N3xUs Konc3pt'z rate limiting is not configured.");
       return { allowed: false, configured: true, retryAfter: 60 };
     }
     return { allowed: true, configured: false };
@@ -102,7 +102,7 @@ export async function enforceRateLimit(
     return { allowed: true, configured: true };
   } catch (error) {
     // Fail closed when rate limiting was explicitly configured but unavailable.
-    console.error("NEXCON rate-limit check failed.", error);
+    console.error("N3xUs Konc3pt'z rate-limit check failed.", error);
     return { allowed: false, configured: true, retryAfter: 60 };
   }
 }

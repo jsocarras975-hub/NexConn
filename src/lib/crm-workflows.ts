@@ -59,7 +59,7 @@ export async function runOverdueTaskWorkflows() {
         if (!to) throw new Error("OWNER_EMAIL is not configured.");
         await sendEmail({
           to,
-          subject: `NEXCON follow-up overdue: ${task.title}`,
+          subject: `N3xUs Konc3pt'z follow-up overdue: ${task.title}`,
           html: `<p>A CRM follow-up task is overdue.</p><p><strong>${escapeHtml(task.title)}</strong></p><p>Priority: ${escapeHtml(task.priority)}</p><p>Due: ${task.dueAt?.toISOString() || "Not set"}</p>`,
         });
         await prisma.crmWorkflowRun.update({ where: { id: claim.id }, data: { status: "SUCCEEDED", result: { taskId: task.id }, finishedAt: new Date() } });

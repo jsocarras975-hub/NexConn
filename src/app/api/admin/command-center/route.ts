@@ -28,7 +28,9 @@ export async function GET() {
   const now = new Date();
   const firstMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
 
-  const [orders, invoices, leads, customers] = await Promise.all([
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
+
+  const [orders, invoices, leads, customers, recentOrders, invoiceQueue, invoiceOutstanding, recentInquiries, openTickets, recentLeads, topItems, totalClients, inquiries7d, totalInquiries, openOrdersByStatus, urgentTickets] = await Promise.all([
     prisma.order.findMany({
       where: { paidAt: { gte: firstMonth }, status: { in: ["PAID", "FULFILLED", "REFUNDED"] } },
       orderBy: { paidAt: "asc" },
@@ -51,6 +53,49 @@ export async function GET() {
       take: 1000,
       select: { id: true, name: true, email: true, createdAt: true },
     }),
+    // --- Owner dashboard queues, KPIs, top products (operational, not revenue-verified) ---
+    prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: { id: true, status: true, totalCents: true, currency: true, createdAt: true, user: { select: { name: true, email: true } }, _count: { select: { items: true } } },
+    }),
+    prisma.invoice.findMany({
+      where: { status: { in: ["SENT", "OVERDUE"] } },
+      orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
+      take: 8,
+      select: { id: true, invoiceNumber: true, status: true, totalCents: true, currency: true, dueAt: true, createdAt: true, user: { select: { name: true, email: true } } },
+    }),
+    prisma.invoice.findMany({
+      where: { status: { in: ["SENT", "OVERDUE"] } },
+      take: 1000,
+      select: { totalCents: true, currency: true, status: true, dueAt: true },
+    }),
+    prisma.inquiry.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, name: true, email: true, company: true, service: true, createdAt: true },
+    }),
+    prisma.ticket.findMany({
+      where: { status: { in: ["OPEN", "IN_PROGRESS", "WAITING"] } },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: { id: true, subject: true, status: true, priority: true, createdAt: true, user: { select: { name: true, email: true } } },
+    }),
+    prisma.crmLead.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, name: true, company: true, stage: true, estimatedValueCents: true, currency: true, createdAt: true },
+    }),
+    prisma.orderItem.findMany({
+      where: { order: { paidAt: { gte: firstMonth }, status: { in: ["PAID", "FULFILLED", "REFUNDED"] } } },
+      take: 10000,
+      select: { orderId: true, productId: true, quantity: true, unitPriceCents: true, order: { select: { currency: true } }, product: { select: { name: true, slug: true } } },
+    }),
+    prisma.user.count({ where: { role: "CLIENT" } }),
+    prisma.inquiry.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+    prisma.inquiry.count(),
+    prisma.order.groupBy({ by: ["status"], where: { status: { in: ["PENDING", "PAID"] } }, _count: true }),
+    prisma.ticket.count({ where: { status: { in: ["OPEN", "IN_PROGRESS", "WAITING"] }, priority: { in: ["HIGH", "URGENT"] } } }),
   ]);
 
   // --- Revenue overview: verified paid amounts only, per currency, 12 months ---
@@ -153,6 +198,51 @@ export async function GET() {
     };
   });
 
+  // --- Owner dashboard KPIs, queues, top products ---
+  // Revenue figures below reuse the verified streams above (orders: Stripe
+  // payment date, invoices: recorded payment date) and are shown per stream
+  // — the two streams are never summed into one total.
+  const primaryCurrency = revenueByCurrency.has("USD") ? "USD" : [...revenueByCurrency.keys()][0] || "USD";
+  const currentMonth = monthKey(now);
+  const thisMonthRows = [...monthly.values()].filter((r) => r.month === currentMonth && r.currency === primaryCurrency);
+  const thisMonthOrdersCents = thisMonthRows.reduce((a, r) => a + r.orderNetCents, 0);
+  const thisMonthInvoicesCents = thisMonthRows.reduce((a, r) => a + r.invoicePaidCents, 0);
+  const last12Row = revenueByCurrency.get(primaryCurrency) || { orderNetCents: 0, invoicePaidCents: 0 };
+  const pipeRow = forecastByCurrency.get(primaryCurrency) || { weightedCents: 0, grossCents: 0, leads: 0 };
+
+  const isOverdueInvoice = (inv: { status: string; dueAt: Date | null }) =>
+    inv.status === "OVERDUE" || (inv.status === "SENT" && inv.dueAt !== null && inv.dueAt.getTime() < now.getTime());
+  const invTotals = new Map<string, { dueCents: number; dueCount: number; overdueCents: number; overdueCount: number }>();
+  for (const inv of invoiceOutstanding) {
+    const currency = inv.currency.toUpperCase();
+    const t = invTotals.get(currency) || { dueCents: 0, dueCount: 0, overdueCents: 0, overdueCount: 0 };
+    if (isOverdueInvoice(inv)) { t.overdueCents += inv.totalCents; t.overdueCount += 1; }
+    else { t.dueCents += inv.totalCents; t.dueCount += 1; }
+    invTotals.set(currency, t);
+  }
+  const invoicesCurrency = invTotals.has("USD") ? "USD" : [...invTotals.keys()][0] || primaryCurrency;
+  const inv = invTotals.get(invoicesCurrency) || { dueCents: 0, dueCount: 0, overdueCents: 0, overdueCount: 0 };
+
+  const openOrderCounts = { PENDING: 0, PAID: 0 };
+  for (const g of openOrdersByStatus) {
+    if (g.status === "PENDING" || g.status === "PAID") openOrderCounts[g.status] = g._count;
+  }
+
+  const productAgg = new Map<string, { productId: string; name: string; slug: string; currency: string; revenueCents: number; units: number; orderIds: Set<string> }>();
+  for (const item of topItems) {
+    const currency = item.order.currency.toUpperCase();
+    const key = `${item.productId}:${currency}`;
+    const p = productAgg.get(key) || { productId: item.productId, name: item.product.name, slug: item.product.slug, currency, revenueCents: 0, units: 0, orderIds: new Set<string>() };
+    p.revenueCents += item.quantity * item.unitPriceCents;
+    p.units += item.quantity;
+    p.orderIds.add(item.orderId);
+    productAgg.set(key, p);
+  }
+  const topProducts = [...productAgg.values()]
+    .map(({ orderIds, ...rest }) => ({ ...rest, orders: orderIds.size }))
+    .sort((a, b) => b.revenueCents - a.revenueCents)
+    .slice(0, 5);
+
   return NextResponse.json({
     periodStart: firstMonth.toISOString(),
     periodEnd: now.toISOString(),
@@ -164,5 +254,36 @@ export async function GET() {
     forecastWeights: STAGE_WEIGHTS,
     segmentCounts,
     lifecycle,
+    kpis: {
+      currency: primaryCurrency,
+      currentMonth,
+      thisMonthOrdersCents,
+      thisMonthInvoicesCents,
+      last12OrdersCents: last12Row.orderNetCents,
+      last12InvoicesCents: last12Row.invoicePaidCents,
+      pipelineWeightedCents: pipeRow.weightedCents,
+      pipelineGrossCents: pipeRow.grossCents,
+      openLeads: pipeRow.leads,
+      openOrders: { total: openOrderCounts.PENDING + openOrderCounts.PAID, pending: openOrderCounts.PENDING, paid: openOrderCounts.PAID },
+      invoicesDueCents: inv.dueCents,
+      invoicesDueCount: inv.dueCount,
+      invoicesOverdueCents: inv.overdueCents,
+      invoicesOverdueCount: inv.overdueCount,
+      invoicesCurrency,
+      inquiries7d,
+      totalInquiries,
+      openTickets: openTickets.length,
+      urgentTickets,
+      activeCustomers: segmentCounts.ACTIVE,
+      totalClients,
+    },
+    queues: {
+      orders: recentOrders.map((o) => ({ id: o.id, status: o.status, totalCents: o.totalCents, currency: o.currency, createdAt: o.createdAt, customerName: o.user.name, customerEmail: o.user.email, items: o._count.items })),
+      invoices: invoiceQueue.map((i) => ({ id: i.id, invoiceNumber: i.invoiceNumber, status: i.status, totalCents: i.totalCents, currency: i.currency, dueAt: i.dueAt, createdAt: i.createdAt, customerName: i.user.name, customerEmail: i.user.email })),
+      inquiries: recentInquiries.map((q) => ({ id: q.id, name: q.name, email: q.email, company: q.company, service: q.service, createdAt: q.createdAt })),
+      tickets: openTickets.map((t) => ({ id: t.id, subject: t.subject, status: t.status, priority: t.priority, createdAt: t.createdAt, customerName: t.user.name, customerEmail: t.user.email })),
+      leads: recentLeads.map((l) => ({ id: l.id, name: l.name, company: l.company, stage: l.stage, estimatedValueCents: l.estimatedValueCents, currency: l.currency, createdAt: l.createdAt })),
+    },
+    topProducts,
   }, { headers: noStore });
 }

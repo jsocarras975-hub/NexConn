@@ -25,13 +25,13 @@ export async function verifyCaptcha(
 
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
-      console.error("NEXCON Turnstile is not configured.");
+      console.error("N3xUs Konc3pt'z Turnstile is not configured.");
       return {
         ok: false,
         reason: "Security check is not configured. Please try again later.",
       };
     }
-    console.warn("NEXCON Turnstile is not configured; skipping CAPTCHA in development.");
+    console.warn("N3xUs Konc3pt'z Turnstile is not configured; skipping CAPTCHA in development.");
     return { ok: true };
   }
 
@@ -54,10 +54,10 @@ export async function verifyCaptcha(
     };
     if (data.success) return { ok: true };
 
-    console.error("NEXCON Turnstile verification failed.", data["error-codes"]);
+    console.error("N3xUs Konc3pt'z Turnstile verification failed.", data["error-codes"]);
     return { ok: false, reason: "Security check failed. Please try again." };
   } catch (error) {
-    console.error("NEXCON Turnstile verification error.", error);
+    console.error("N3xUs Konc3pt'z Turnstile verification error.", error);
     return {
       ok: false,
       reason: "Security check could not be completed. Please try again.",

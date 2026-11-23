@@ -32,7 +32,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         reason: "requested_by_customer",
         metadata: { orderId: order.id, initiatedBy: user.id },
       },
-      { idempotencyKey: `nexcon-full-refund-${order.id}` },
+      { idempotencyKey: `n3xus-full-refund-${order.id}` },
     );
 
     if (refund.status === "succeeded") {

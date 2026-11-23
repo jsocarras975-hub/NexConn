@@ -65,7 +65,7 @@ export function CrmWorkspace() {
     finally { setBusy(false); }
   }
   const field="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white";
-  const button="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
+  const button="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
   const select="rounded-lg border border-white/10 bg-slate-950 px-2 py-2 text-xs text-white";
   const customerOptions = data.leads.filter(l=>l.customerId);
   return <div className="space-y-6">
