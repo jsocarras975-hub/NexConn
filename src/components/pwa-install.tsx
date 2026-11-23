@@ -113,7 +113,7 @@ export function PwaInstall() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">A new version is ready</p>
             <p className="mt-0.5 text-xs text-slate-400">
-              Update now to get the latest NEXCON.
+              Update now to get the latest N3xUs Konc3pt'z.
             </p>
           </div>
           <button type="button" className="btn-primary shrink-0" onClick={applyUpdate}>
@@ -133,11 +133,11 @@ export function PwaInstall() {
             className="shrink-0 rounded-xl"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Install the NEXCON app</p>
+            <p className="text-sm font-semibold">Install the N3xUs Konc3pt'z app</p>
             <p className="mt-0.5 text-xs leading-5 text-slate-400">
               {isIos && !deferred
                 ? "Tap Share, then “Add to Home Screen” to install it."
-                : "Add NEXCON to your home screen for the full-screen app experience."}
+                : "Add N3xUs Konc3pt'z to your home screen for the full-screen app experience."}
             </p>
           </div>
           <div className="flex shrink-0 flex-col gap-2">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Hexagon, ShoppingCart } from "lucide-react";
+import { ArrowUpRight, ShoppingCart } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { MobileNav } from "@/components/mobile-nav";
 
@@ -19,20 +19,21 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#080b12]/85 backdrop-blur-xl">
       <div className="container flex h-[76px] items-center justify-between gap-3">
-        <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="NEXCON home">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400">
-            <Hexagon size={21} />
-          </span>
-          <span className="text-[17px] font-black tracking-[.22em]">
-            NEXCON<span className="text-violet-300">.</span>
+        <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="N3xUs Konc3pt'z home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/icon-192.png" alt="" className="h-9 w-9 rounded-[10px]" />
+          <span className="text-[17px] font-black tracking-[.12em]">
+            N3xUs Konc3pt&apos;z
           </span>
         </Link>
 
-        <nav aria-label="Main navigation" className="hidden items-center gap-7 text-[13px] text-slate-300 md:flex">
+        <nav aria-label="Main navigation" className="hidden items-center gap-6 text-[13px] text-slate-300 lg:flex">
           <Link href="/services" className="hover:text-white">Services</Link>
-          <Link href="/work" className="hover:text-white">Our work</Link>
-          <Link href="/marketplace" className="hover:text-white">Marketplace</Link>
+          <Link href="/work" className="hover:text-white">Work</Link>
+          <Link href="/store" className="hover:text-white">Store</Link>
           <Link href="/lab" className="hover:text-white">Lab</Link>
+          <Link href="/journal" className="hover:text-white">Journal</Link>
+          <Link href="/marketplace" className="hover:text-white">Marketplace</Link>
           <Link href="/contact" className="hover:text-white">Contact</Link>
         </nav>
 
@@ -57,9 +58,9 @@ export async function SiteHeader() {
             )}
           </div>
 
-          <Link href="/contact" className="btn-primary">
-            <span className="hidden sm:inline">Start a project</span>
-            <span className="sm:hidden">Start</span>
+          <Link href="/book" className="btn-primary">
+            <span className="hidden sm:inline">Open a brief</span>
+            <span className="sm:hidden">Brief</span>
             <ArrowUpRight size={15} />
           </Link>
 

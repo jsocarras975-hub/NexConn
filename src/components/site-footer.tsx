@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { Hexagon, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { STUDIO } from "@/data/studio";
 export function SiteFooter() {
  return <footer className="border-t border-white/10 bg-[#070a10]">
   <div className="container grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-   <div><div className="flex items-center gap-3 text-lg font-black tracking-[.2em]"><Hexagon className="text-violet-300"/> NEXCON</div><p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">Digital systems, engineered to scale. Strategy, software, and automation for ambitious ideas.</p></div>
-   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Explore</p><div className="grid gap-3 text-sm text-slate-400"><Link href="/services">Services</Link><Link href="/work">Our work</Link><Link href="/marketplace">Marketplace</Link><Link href="/lab">Lab</Link></div></div>
-   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Company</p><div className="grid gap-3 text-sm text-slate-400"><Link href="/about">About</Link><Link href="/journal">Journal</Link><Link href="/contact">Contact</Link></div></div>
-   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Let's build</p><p className="text-sm leading-6 text-slate-400">Have a product, platform, or process in mind?</p><Link href="/contact" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-300">Tell us about it <ArrowUpRight size={15}/></Link></div>
+   <div><div className="flex items-center gap-3 text-lg font-black tracking-[.12em]">{/* eslint-disable-next-line @next/next/no-img-element */}<img src="/icons/icon-192.png" alt="" className="h-8 w-8 rounded-lg" /> N3xUs Konc3pt&apos;z</div><p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">{STUDIO.metaDescription}</p><p className="mt-4 text-sm leading-6 text-slate-400">{STUDIO.location} · Desk {STUDIO.hours} · {STUDIO.rating}</p></div>
+   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Explore</p><div className="grid gap-3 text-sm text-slate-400"><Link href="/services">Services</Link><Link href="/work">Work</Link><Link href="/store">Store</Link><Link href="/lab">Lab</Link><Link href="/journal">Journal</Link><Link href="/marketplace">Marketplace</Link></div></div>
+   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Studio</p><div className="grid gap-3 text-sm text-slate-400"><Link href="/about">About</Link><Link href="/studio">How the desk runs</Link><Link href="/transmissions">Transmissions</Link><Link href="/book">Open a brief</Link><Link href="/contact">Contact</Link><Link href="/rss.xml">RSS</Link></div></div>
+   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Reach the desk</p><div className="grid gap-3 text-sm text-slate-400"><a href={`mailto:${STUDIO.email}`}>{STUDIO.email}</a><a href={STUDIO.discord} target="_blank" rel="noreferrer">Discord — join the server</a><a href={STUDIO.telegram} target="_blank" rel="noreferrer">Telegram — {STUDIO.telegramHandle}</a><span>First reply within 24h on weekdays</span></div><Link href="/book" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300">Open a brief <ArrowUpRight size={15}/></Link></div>
   </div>
-  <div className="container flex flex-col justify-between gap-3 border-t border-white/10 py-5 text-xs text-slate-500 sm:flex-row"><span>© {new Date().getFullYear()} NEXCON. All rights reserved.</span><span>Built for what comes next.</span></div>
+  <div className="container flex flex-col justify-between gap-3 border-t border-white/10 py-5 text-xs text-slate-500 sm:flex-row"><span>© {new Date().getFullYear()} {STUDIO.name}. All rights reserved.</span><span>Design. Development. Deployment.</span></div>
  </footer>;
 }

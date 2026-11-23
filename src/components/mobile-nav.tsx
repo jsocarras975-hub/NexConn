@@ -11,9 +11,11 @@ type Props = {
 
 const links = [
   { href: "/services", label: "Services" },
-  { href: "/work", label: "Our work" },
-  { href: "/marketplace", label: "Marketplace" },
+  { href: "/work", label: "Work" },
+  { href: "/store", label: "Store" },
   { href: "/lab", label: "Lab" },
+  { href: "/journal", label: "Journal" },
+  { href: "/marketplace", label: "Marketplace" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -26,14 +28,14 @@ export function MobileNav({ accountHref, accountLabel }: Props) {
   }
 
   return (
-    <div className="relative md:hidden">
+    <div className="relative lg:hidden">
       <button
         type="button"
         aria-label={open ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={open}
         aria-controls="nexcon-mobile-navigation"
         onClick={() => setOpen((value) => !value)}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-slate-200 transition hover:border-violet-300/40 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-slate-200 transition hover:border-cyan-300/40 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
       >
         {open ? <X size={19} /> : <Menu size={19} />}
       </button>
@@ -49,7 +51,7 @@ export function MobileNav({ accountHref, accountLabel }: Props) {
                 key={link.href}
                 href={link.href}
                 onClick={closeMenu}
-                className="rounded-xl px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/[.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-300"
+                className="rounded-xl px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/[.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
               >
                 {link.label}
               </Link>
@@ -65,11 +67,11 @@ export function MobileNav({ accountHref, accountLabel }: Props) {
               <ArrowUpRight size={15} />
             </Link>
             <Link
-              href="/contact"
+              href="/book"
               onClick={closeMenu}
               className="btn-primary mt-2 w-full"
             >
-              Start a project <ArrowUpRight size={15} />
+              Open a brief <ArrowUpRight size={15} />
             </Link>
           </div>
         </div>
