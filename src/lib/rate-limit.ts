@@ -50,7 +50,9 @@ export async function enforceRateLimit(
   }
 
   const key = getClientKey(request, policy.name);
-  const endpoint = `${url.replace(/\/+$/, "")}/pipeline`;
+  // EVAL is a single command: Upstash documents it as a POST to the base
+  // REST URL with the command as a JSON array, not inside /pipeline.
+  const endpoint = url.replace(/\/+$/, "");
 
   try {
     const response = await fetch(endpoint, {
@@ -60,13 +62,11 @@ export async function enforceRateLimit(
         "Content-Type": "application/json",
       },
       body: JSON.stringify([
-        [
-          "EVAL",
-          "local current = redis.call('INCR', KEYS[1]); if current == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]); end; return current",
-          "1",
-          key,
-          String(policy.windowSeconds),
-        ],
+        "EVAL",
+        "local current = redis.call('INCR', KEYS[1]); if current == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]); end; return current",
+        "1",
+        key,
+        String(policy.windowSeconds),
       ]),
       cache: "no-store",
     });
@@ -74,11 +74,20 @@ export async function enforceRateLimit(
     if (!response.ok) throw new Error(`Rate-limit provider returned ${response.status}.`);
     const payload = (await response.json()) as {
       error?: string;
-      result?: Array<{ result?: number; error?: string }>;
+      result?: number | string | Array<{ result?: number | string; error?: string }>;
     };
 
-    const count = Number(payload.result?.[0]?.result);
-    if (!Number.isFinite(count) || payload.error || payload.result?.some((item) => item.error)) {
+    // Direct EVAL reply: { "result": <count> }. Accept the pipeline
+    // nesting too, in case the provider ever wraps it.
+    const raw = Array.isArray(payload.result)
+      ? payload.result[0]?.result
+      : payload.result;
+    const count = Number(raw);
+    if (
+      !Number.isFinite(count) ||
+      payload.error ||
+      (Array.isArray(payload.result) && payload.result.some((item) => item.error))
+    ) {
       throw new Error("Rate-limit provider returned an invalid response.");
     }
 
