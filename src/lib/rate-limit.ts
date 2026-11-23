@@ -25,8 +25,18 @@ export async function enforceRateLimit(
   request: Request,
   policy: RateLimitPolicy,
 ): Promise<RateLimitResult> {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  // Prefer the names the Vercel Upstash integration creates
+  // (UPSTASH_REDIS_KV_REST_API_URL / UPSTASH_REDIS_KV_REST_API_TOKEN,
+  // the read-write REST token). The UPSTASH_REDIS_REST_* names are the
+  // fallback for local development. A manually copied token that turns
+  // out to be the read-only one fails closed here, so the integration
+  // values must win whenever they exist.
+  const url =
+    process.env.UPSTASH_REDIS_KV_REST_API_URL ??
+    process.env.UPSTASH_REDIS_REST_URL;
+  const token =
+    process.env.UPSTASH_REDIS_KV_REST_API_TOKEN ??
+    process.env.UPSTASH_REDIS_REST_TOKEN;
 
   // Optional during local development only. In production an unconfigured
   // rate limiter fails closed: public auth and payment endpoints must never
