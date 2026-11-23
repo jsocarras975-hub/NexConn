@@ -51,7 +51,7 @@ export default async function CrmPage() {
 
   return <main className="container section">
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-      <div><p className="eyebrow">NEXCON / CUSTOMER RELATIONSHIP MANAGEMENT</p><h1 className="mt-3 text-3xl font-semibold">Customer relationships.</h1><p className="mt-2 text-sm text-slate-400">A consolidated view of customer accounts, marketplace activity and service invoices.</p></div>
+      <div><p className="eyebrow">N3xUs Konc3pt'z / CUSTOMER RELATIONSHIP MANAGEMENT</p><h1 className="mt-3 text-3xl font-semibold">Customer relationships.</h1><p className="mt-2 text-sm text-slate-400">A consolidated view of customer accounts, marketplace activity and service invoices.</p></div>
       <Link href="/admin" className="btn-secondary">Admin home</Link>
     </div>
     <div className="mb-8"><CrmWorkspace /></div>

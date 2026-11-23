@@ -28,7 +28,7 @@ export default async function InvoiceDetail({ params, searchParams }: { params: 
       {query.payment === "cancelled" && <p className="no-print mb-4 text-sm text-slate-400">Checkout was cancelled. No payment was recorded.</p>}
       <article className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-slate-900 shadow-xl print:rounded-none print:p-0 print:shadow-none sm:p-12">
         <div className="flex flex-wrap justify-between gap-8 border-b border-slate-200 pb-8">
-          <div><p className="text-sm font-semibold tracking-[0.2em] text-violet-700">NEXCON</p><h1 className="mt-3 text-3xl font-bold">INVOICE</h1><p className="mt-2 text-sm text-slate-500">{invoice.invoiceNumber}</p></div>
+          <div><p className="text-sm font-semibold tracking-[0.2em] text-cyan-700">N3xUs Konc3pt'z</p><h1 className="mt-3 text-3xl font-bold">INVOICE</h1><p className="mt-2 text-sm text-slate-500">{invoice.invoiceNumber}</p></div>
           <div className="text-right"><p className="text-sm font-semibold">{invoice.status}</p><p className="mt-2 text-sm text-slate-500">Issued {invoice.createdAt.toLocaleDateString()}</p>{invoice.dueAt && <p className="mt-1 text-sm text-slate-500">Due {invoice.dueAt.toLocaleDateString()}</p>}</div>
         </div>
         <div className="grid gap-8 py-8 sm:grid-cols-2">

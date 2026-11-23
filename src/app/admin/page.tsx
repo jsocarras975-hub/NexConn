@@ -20,7 +20,7 @@ export default async function Admin() {
     <main className="container section">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">NEXCON / OWNER CONSOLE</p>
+          <p className="eyebrow">N3xUs Konc3pt'z / OWNER CONSOLE</p>
           <h1 className="mt-3 text-3xl font-semibold">Control center.</h1>
           <p className="mt-2 text-sm text-slate-400">Operational overview for your business.</p>
         </div>
@@ -29,7 +29,7 @@ export default async function Admin() {
       <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map(([Icon, label, value]) => (
           <div key={label} className="card p-5">
-            <Icon className="text-violet-300" />
+            <Icon className="text-cyan-300" />
             <p className="mt-5 text-3xl font-semibold">{value}</p>
             <p className="mt-1 text-sm text-slate-400">{label}</p>
           </div>
@@ -50,9 +50,9 @@ export default async function Admin() {
         <Link href="/admin/inquiries" className="btn-secondary">Inquiries ↗</Link>
       </div>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <Link href="/admin/inquiries" className="card flex items-center justify-between p-6 hover:border-violet-300/30">
+        <Link href="/admin/inquiries" className="card flex items-center justify-between p-6 hover:border-cyan-300/30">
           <div><h2 className="font-semibold">Project inquiries</h2><p className="mt-2 text-sm text-slate-400">Review incoming customer briefs.</p></div>
-          <ArrowUpRight className="text-violet-300" />
+          <ArrowUpRight className="text-cyan-300" />
         </Link>
         <div className="card p-6">
           <h2 className="font-semibold">Security reminder</h2>

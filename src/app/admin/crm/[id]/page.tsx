@@ -46,7 +46,7 @@ export default async function CrmCustomerPage({ params }: Props) {
   const currencies = new Set([...orders.map(o => o.currency), ...invoices.map(i => i.currency)]);
   return <main className="container section">
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-      <div><p className="eyebrow">NEXCON / CRM / CUSTOMER PROFILE</p><h1 className="mt-3 text-3xl font-semibold">{customer.name || "Unnamed customer"}</h1><p className="mt-2 text-sm text-slate-400">{customer.email}</p><p className="mt-1 text-xs text-slate-500">Customer since {customer.createdAt.toLocaleDateString()} {customer.disabled ? "· Account disabled" : ""}</p></div>
+      <div><p className="eyebrow">N3xUs Konc3pt'z / CRM / CUSTOMER PROFILE</p><h1 className="mt-3 text-3xl font-semibold">{customer.name || "Unnamed customer"}</h1><p className="mt-2 text-sm text-slate-400">{customer.email}</p><p className="mt-1 text-xs text-slate-500">Customer since {customer.createdAt.toLocaleDateString()} {customer.disabled ? "· Account disabled" : ""}</p></div>
       <div className="flex gap-2"><Link href="/admin/crm" className="btn-secondary">Back to CRM</Link><Link href="/admin" className="btn-secondary">Admin home</Link></div>
     </div>
     <div className="mb-6 grid gap-4 sm:grid-cols-3">

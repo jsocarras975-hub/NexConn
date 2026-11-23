@@ -11,7 +11,7 @@ export default async function AccountSettingsPage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-12">
       <div className="mb-8">
-        <p className="text-sm font-medium text-violet-300">Customer portal</p>
+        <p className="text-sm font-medium text-cyan-300">Customer portal</p>
         <h1 className="mt-2 text-3xl font-semibold">Account settings</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
           Keep your contact details current. Your password is required before changing your sign-in email.

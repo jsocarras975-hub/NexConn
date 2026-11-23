@@ -43,7 +43,7 @@ export default async function PortalLibraryPage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.product.imageUrl} alt="" className="h-40 w-full object-cover" />
             ) : (
-              <div className="grid h-40 place-items-center bg-white/[0.03] text-3xl text-violet-300">◇</div>
+              <div className="grid h-40 place-items-center bg-white/[0.03] text-3xl text-cyan-300">◇</div>
             )}
             <div className="p-5">
               <h2 className="font-semibold">{item.product.name}</h2>

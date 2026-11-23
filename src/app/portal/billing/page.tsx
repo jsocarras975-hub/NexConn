@@ -80,7 +80,7 @@ export default async function PortalBillingPage() {
           )) : <p className="py-6 text-sm text-slate-500">No completed marketplace payments yet.</p>}
         </div>
       </section>
-      <p className="mt-5 text-xs leading-6 text-slate-500">Order dates show when the order was created, not a verified payment settlement timestamp. Invoice payment dates show the date recorded by NEXCON. For bank settlement confirmation, use your payment provider's records.</p>
+      <p className="mt-5 text-xs leading-6 text-slate-500">Order dates show when the order was created, not a verified payment settlement timestamp. Invoice payment dates show the date recorded by N3xUs Konc3pt'z. For bank settlement confirmation, use your payment provider's records.</p>
     </main>
   );
 }

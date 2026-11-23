@@ -24,7 +24,7 @@ export default async function PortalOrdersPage() {
         <div>
           <p className="eyebrow">Client workspace</p>
           <h1 className="mt-3 text-3xl font-semibold">Your orders</h1>
-          <p className="mt-2 text-sm text-slate-400">A record of your NEXCON purchases.</p>
+          <p className="mt-2 text-sm text-slate-400">A record of your N3xUs Konc3pt'z purchases.</p>
         </div>
         <Link href="/portal" className="btn-secondary">Back to portal</Link>
       </div>
@@ -48,7 +48,7 @@ export default async function PortalOrdersPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold">{money(order.totalCents, order.currency)}</p>
-                    <span className={`mt-1 inline-block text-xs ${order.status === "PAID" || order.status === "FULFILLED" ? "text-emerald-300" : order.status === "CANCELLED" ? "text-rose-300" : "text-violet-300"}`}>
+                    <span className={`mt-1 inline-block text-xs ${order.status === "PAID" || order.status === "FULFILLED" ? "text-emerald-300" : order.status === "CANCELLED" ? "text-rose-300" : "text-cyan-300"}`}>
                       {order.status.replaceAll("_", " ")}
                     </span>
                   </div>

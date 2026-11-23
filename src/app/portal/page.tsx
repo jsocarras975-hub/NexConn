@@ -44,7 +44,7 @@ export default async function Portal() {
           [Library, "Library items", libraryCount],
         ].map(([Icon, label, value]: any) => (
           <div key={label} className="card p-5">
-            <Icon className="text-violet-300" />
+            <Icon className="text-cyan-300" />
             <p className="mt-5 text-2xl font-semibold">{value}</p>
             <p className="mt-1 text-sm text-slate-400">{label}</p>
           </div>
@@ -64,16 +64,16 @@ export default async function Portal() {
         <section className="card p-6">
           <div className="flex justify-between">
             <h2 className="font-semibold">Recent projects</h2>
-            <Link href="/contact" className="text-xs text-violet-300">Start a project ↗</Link>
+            <Link href="/contact" className="text-xs text-cyan-300">Start a project ↗</Link>
           </div>
           {projects.length ? projects.map((project) => (
             <div key={project.id} className="mt-5 border-t border-white/10 pt-4">
               <div className="flex justify-between gap-3">
                 <p className="text-sm font-medium">{project.title}</p>
-                <span className="text-xs text-violet-300">{project.status.replace("_", " ")}</span>
+                <span className="text-xs text-cyan-300">{project.status.replace("_", " ")}</span>
               </div>
               <div className="mt-3 h-1.5 rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-violet-400" style={{ width: `${project.progress}%` }} />
+                <div className="h-full rounded-full bg-cyan-400" style={{ width: `${project.progress}%` }} />
               </div>
               <p className="mt-2 text-xs text-slate-500">{project.progress}% complete</p>
             </div>
@@ -84,7 +84,7 @@ export default async function Portal() {
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-semibold">Recent orders</h2>
             <Link href="/portal/settings" className="btn-secondary">Account settings</Link>
-          <Link href="/portal/orders" className="text-xs text-violet-300">View all <ArrowUpRight className="inline" size={13} /></Link>
+          <Link href="/portal/orders" className="text-xs text-cyan-300">View all <ArrowUpRight className="inline" size={13} /></Link>
           </div>
           {orders.length ? orders.map((order) => (
             <div key={order.id} className="mt-5 flex justify-between border-t border-white/10 pt-4">
