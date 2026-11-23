@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  OWNER
+  ADMIN
+}
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+  REFUNDED
+}
+enum ProjectStatus {
+  INQUIRY
+  QUOTED
+  ACTIVE
+  REVIEW
+  COMPLETED
+  ON_HOLD
+}
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(CLIENT)
+  disabled     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  orders       Order[]
+  projects     Project[] @relation("ClientProjects")
+  tickets      Ticket[]
+  messages     Message[]
+  auditLogs    AuditLog[] @relation("ActorLogs")
+  invoices     Invoice[]
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  summary        String
+  description    String   @db.Text
+  category       String
+  priceCents     Int
+  currency       String   @default("usd")
+  imageUrl       String?
+  downloadUrl    String?
+  downloadKey    String?
+  active         Boolean  @default(true)
+  featured       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orderItems     OrderItem[]
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id])
+  status                OrderStatus @default(PENDING)
+  subtotalCents         Int
+  totalCents            Int
+  currency              String      @default("usd")
+  stripeCheckoutSession String?     @unique
+  stripePaymentIntent   String?     @unique
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  items                 OrderItem[]
+}
+
+model OrderItem {
+  id              String  @id @default(cuid())
+  orderId         String
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product @relation(fields: [productId], references: [id])
+  quantity        Int
+  unitPriceCents  Int
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      User          @relation("ClientProjects", fields: [clientId], references: [id])
+  title       String
+  summary     String
+  status      ProjectStatus @default(INQUIRY)
+  progress    Int           @default(0)
+  budgetCents Int?
+  dueAt       DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  messages    Message[]
+  tasks       ProjectTask[]
+  invoices    Invoice[]
+}
+
+model Ticket {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  subject   String
+  status    TicketStatus   @default(OPEN)
+  priority  TicketPriority @default(NORMAL)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  ticketId  String?
+  ticket    Ticket?  @relation(fields: [ticketId], references: [id])
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+model Inquiry {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  company     String?
+  service     String
+  budget      String?
+  timeline    String?
+  details     String   @db.Text
+  source      String   @default("website")
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation("ActorLogs", fields: [actorId], references: [id])
+  action    String
+  target    String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+model ProjectTask {
+  id          String     @id @default(cuid())
+  projectId   String
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?    @db.Text
+  status      TaskStatus @default(TODO)
+  dueAt       DateTime?
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNumber  String        @unique
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  projectId      String?
+  project        Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  status         InvoiceStatus @default(DRAFT)
+  currency       String        @default("usd")
+  subtotalCents  Int
+  taxCents       Int            @default(0)
+  totalCents     Int
+  dueAt          DateTime?
+  paidAt         DateTime?
+  notes          String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  items          InvoiceItem[]
+}
+
+model InvoiceItem {
+  id             String  @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description    String
+  quantity       Int
+  unitPriceCents Int
+}
+
+model BusinessSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
