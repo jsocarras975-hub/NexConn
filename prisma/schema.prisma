@@ -43,6 +43,10 @@ enum TicketPriority {
 
 model User {
   id           String    @id @default(cuid())
+  emailVerificationTokens EmailVerificationToken[]
+  emailVerified DateTime?
+  passwordResetTokens PasswordResetToken[]
+  tokenVersion Int @default(0)
   name         String
   email        String    @unique
   passwordHash String
@@ -79,6 +83,9 @@ model Product {
 
 model Order {
   id                    String      @id @default(cuid())
+  refunds StripeRefund[]
+  paidAt DateTime?
+  refundedCents Int @default(0)
   userId                String
   user                  User        @relation(fields: [userId], references: [id])
   status                OrderStatus @default(PENDING)
@@ -197,6 +204,8 @@ model ProjectTask {
 
 model Invoice {
   id             String        @id @default(cuid())
+  stripePaymentIntent String? @unique
+  stripeCheckoutSession String? @unique
   invoiceNumber  String        @unique
   userId         String
   user           User          @relation(fields: [userId], references: [id])
@@ -228,4 +237,147 @@ model BusinessSetting {
   key       String   @id
   value     String   @db.Text
   updatedAt DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model StripeWebhookEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  eventType   String
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([eventType, createdAt])
+}
+
+model StripeRefund {
+  id               String   @id @default(cuid())
+  stripeRefundId   String   @unique
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amountCents      Int
+  currency         String
+  status           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([orderId, createdAt])
+}
+
+model CrmLead {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String?
+  company            String?
+  phone              String?
+  source             String   @default("OTHER")
+  stage              String   @default("NEW")
+  estimatedValueCents Int?
+  currency           String   @default("USD")
+  customerId         String?
+  assignedToId       String?
+  createdById        String
+  nextFollowUpAt     DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([stage, updatedAt])
+  @@index([customerId])
+  @@index([assignedToId, nextFollowUpAt])
+}
+
+model CrmTask {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  status       String   @default("OPEN")
+  priority     String   @default("NORMAL")
+  dueAt        DateTime?
+  customerId   String?
+  leadId       String?
+  assignedToId String?
+  createdById  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, dueAt])
+  @@index([customerId])
+  @@index([leadId])
+}
+
+model CrmNote {
+  id          String   @id @default(cuid())
+  body        String
+  customerId  String?
+  leadId      String?
+  authorId    String
+  createdAt   DateTime @default(now())
+
+  @@index([customerId, createdAt])
+  @@index([leadId, createdAt])
+}
+
+model CrmCommunication {
+  id          String   @id @default(cuid())
+  channel     String
+  direction   String   @default("OUTBOUND")
+  subject     String?
+  summary     String
+  customerId  String?
+  leadId      String?
+  authorId    String
+  occurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([customerId, occurredAt])
+  @@index([leadId, occurredAt])
+}
+
+model CrmWorkflow {
+  id          String   @id @default(cuid())
+  name        String
+  trigger     String
+  action      String
+  config      Json
+  enabled     Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([enabled, trigger])
+}
+
+model CrmWorkflowRun {
+  id          String   @id @default(cuid())
+  workflowId  String
+  dedupeKey   String
+  status      String   @default("RUNNING")
+  result      Json?
+  error       String?
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+
+  @@unique([workflowId, dedupeKey])
+  @@index([status, startedAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

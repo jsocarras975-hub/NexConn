@@ -1,24 +1,59 @@
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-function client(){
-  const accessKeyId=process.env.S3_ACCESS_KEY_ID;
-  const secretAccessKey=process.env.S3_SECRET_ACCESS_KEY;
-  const region=process.env.S3_REGION||"auto";
-  if(!accessKeyId||!secretAccessKey||!process.env.S3_BUCKET)throw new Error("Private object storage is not configured.");
+function client() {
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
+  const region = process.env.S3_REGION || "auto";
+
+  if (!accessKeyId || !secretAccessKey || !process.env.S3_BUCKET) {
+    throw new Error("Private object storage is not configured.");
+  }
+
   return new S3Client({
     region,
-    endpoint:process.env.S3_ENDPOINT||undefined,
-    forcePathStyle:Boolean(process.env.S3_ENDPOINT),
-    credentials:{accessKeyId,secretAccessKey}
+    endpoint: process.env.S3_ENDPOINT || undefined,
+    forcePathStyle: Boolean(process.env.S3_ENDPOINT),
+    credentials: { accessKeyId, secretAccessKey },
   });
 }
 
-export async function createPrivateDownloadUrl(key:string){
-  const command=new GetObjectCommand({
-    Bucket:process.env.S3_BUCKET,
-    Key:key,
-    ResponseContentDisposition:"attachment"
+export async function createPrivateDownloadUrl(key: string) {
+  const command = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET,
+    Key: key,
+    ResponseContentDisposition: "attachment",
   });
-  return getSignedUrl(client(),command,{expiresIn:300});
+  return getSignedUrl(client(), command, { expiresIn: 300 });
+}
+
+export async function createPrivateUploadUrl(args: {
+  key: string;
+  contentType: string;
+  contentLength: number;
+}) {
+  const command = new PutObjectCommand({
+    Bucket: process.env.S3_BUCKET,
+    Key: args.key,
+    ContentType: args.contentType,
+    ContentLength: args.contentLength,
+    ServerSideEncryption: "AES256",
+  });
+  return getSignedUrl(client(), command, { expiresIn: 300 });
+}
+
+export async function inspectPrivateObject(key: string) {
+  const result = await client().send(new HeadObjectCommand({
+    Bucket: process.env.S3_BUCKET,
+    Key: key,
+  }));
+  return {
+    contentLength: result.ContentLength ?? 0,
+    contentType: result.ContentType ?? "",
+  };
 }
