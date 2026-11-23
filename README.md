@@ -1,4 +1,4 @@
-# NEXCON 2.0
+# N3xUs Konc3pt'z 2.0
 
 A full-stack digital studio platform starter: public website, service catalog, product marketplace, client portal, owner console, PostgreSQL data model, and secure server-side account provisioning.
 
@@ -16,7 +16,7 @@ This is a runnable foundation, not a production-certified deployment. Stripe che
 ## 1. Install
 
 ```powershell
-# Extract ZIP, open PowerShell in the nexcon-2 folder
+# Extract ZIP, open PowerShell in the n3xus-konc3ptz folder
 npm install
 Copy-Item .env.example .env
 ```
@@ -124,7 +124,7 @@ Open http://localhost:3000.
 - The case studies are sample concepts, not claims of completed client engagements.
 
 
-## NEXCON 2.2 additions
+## N3xUs Konc3pt'z 2.2 additions
 
 - Owner analytics page: `/admin/analytics`
 - Customer directory: `/admin/customers`
@@ -143,7 +143,7 @@ npx prisma generate
 The analytics dashboard is an operational snapshot, not audited financial reporting. Multi-currency revenue must be normalized before accounting use. Invoices are currently records only, not payment instruments. Configure and test email delivery before relying on notifications.
 
 
-### NEXCON 2.3 additions
+### N3xUs Konc3pt'z 2.3 additions
 
 - Private paid-order download endpoint: `/api/orders/[id]/downloads`
 - Five-minute presigned S3-compatible object URLs; the endpoint checks the signed-in customer owns a paid/fulfilled order.

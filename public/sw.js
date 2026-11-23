@@ -1,4 +1,4 @@
-/* NEXCON service worker — app shell + offline fallback.
+/* N3xUs Konc3pt'z service worker — app shell + offline fallback.
  *
  * Strategies:
  * - Navigations: network-first. A fresh page is cached on success; when the

@@ -2,11 +2,12 @@ import type { NextConfig } from "next";
 
 // Content Security Policy. What the app actually loads in the browser:
 // - Same-origin scripts, styles, images and fonts (Next.js, Tailwind).
-// - Cloudflare Turnstile (challenges.cloudflare.com): widget script, its
-//   iframe, and its verification calls. Nothing else is loaded cross-origin:
-//   Stripe checkout is a server-side redirect (no Stripe.js in the browser),
-//   Resend is server-side only, and product images come from the configured
-//   S3 public base URL over HTTPS (covered by img-src https:).
+// - Google Fonts (fonts.googleapis.com stylesheet, fonts.gstatic.com
+//   font files) for IBM Plex Sans / Mono — the studio's type system.
+//   Nothing else is loaded cross-origin: Stripe checkout is a server-side
+//   redirect (no Stripe.js in the browser), Resend is server-side only, and
+//   product images come from the configured S3 public base URL over HTTPS
+//   (covered by img-src https:).
 // Next.js without a nonce setup needs 'unsafe-inline' for its own scripts
 // and styles; that is the standard trade-off until nonces are introduced.
 // If a new third-party embed is added later, extend the matching directive
@@ -15,9 +16,9 @@ import type { NextConfig } from "next";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: https:",
-  "font-src 'self' data:",
+  "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https://challenges.cloudflare.com",
   "frame-src https://challenges.cloudflare.com",
   "object-src 'none'",
