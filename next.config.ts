@@ -68,6 +68,15 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "no-store, max-age=0" },
         ],
       },
+      // The service worker must always be revalidated so app updates reach
+      // installed devices. Browsers already cap SW caching at 24h; this
+      // makes it immediate.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
     ];
   },
 };
