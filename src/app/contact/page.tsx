@@ -49,6 +49,15 @@ export default function Contact() {
       <div className="grid gap-8 lg:grid-cols-[.75fr_1.25fr]">
         <div className="space-y-5">
           <div className="card p-6">
+            <p className="text-sm font-semibold">Reach the desk</p>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
+              <li><a href="mailto:studio@n3xuskonc3ptz.com" className="text-cyan-300">studio@n3xuskonc3ptz.com</a> — Juan answers it himself</li>
+              <li><a href="https://discord.gg/3UHWMa7rC" target="_blank" rel="noreferrer" className="text-cyan-300">Discord</a> — join the server</li>
+              <li><a href="https://t.me/n3xusg" target="_blank" rel="noreferrer" className="text-cyan-300">Telegram — @n3xusg</a></li>
+              <li>Desk Mon–Fri 09:00–18:00, America/Chicago · first reply within 24h on weekdays</li>
+            </ul>
+          </div>
+          <div className="card p-6">
             <p className="text-sm font-semibold">A good brief includes</p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
               <li>• What you want to achieve</li>

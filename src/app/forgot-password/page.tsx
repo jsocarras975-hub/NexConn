@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
           {message && <p role="status" className="text-sm text-emerald-300">{message}</p>}
           {error && <p role="alert" className="text-sm text-rose-300">{error}</p>}
         </form>
-        <p className="mt-6 text-sm text-slate-400"><Link className="text-violet-300" href="/login">Back to sign in</Link></p>
+        <p className="mt-6 text-sm text-slate-400"><Link className="text-cyan-300" href="/login">Back to sign in</Link></p>
       </div>
     </main>
   );

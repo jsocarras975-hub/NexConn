@@ -37,10 +37,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       mode: "payment", customer_email: invoice.user.email, client_reference_id: invoice.id,
       metadata: { invoiceId: invoice.id, userId: user.id, invoiceNumber: invoice.invoiceNumber },
       payment_intent_data: { metadata: { invoiceId: invoice.id, userId: user.id } },
-      line_items: [{ quantity: 1, price_data: { currency: invoice.currency.toLowerCase(), unit_amount: invoice.totalCents, product_data: { name: `NEXCON invoice ${invoice.invoiceNumber}` } } }],
+      line_items: [{ quantity: 1, price_data: { currency: invoice.currency.toLowerCase(), unit_amount: invoice.totalCents, product_data: { name: `N3xUs Konc3pt'z invoice ${invoice.invoiceNumber}` } } }],
       success_url: `${appUrl}/portal/invoices/${invoice.id}?payment=success`,
       cancel_url: `${appUrl}/portal/invoices/${invoice.id}?payment=cancelled`,
-    }, { idempotencyKey: `nexcon-invoice-${invoice.id}` });
+    }, { idempotencyKey: `n3xus-invoice-${invoice.id}` });
     if (!session.url) throw new Error("Stripe did not return a checkout URL.");
     const saved = await prisma.invoice.updateMany({ where: { id, userId: user.id, status: { in: ["SENT", "OVERDUE"] } }, data: { stripeCheckoutSession: session.id } });
     if (saved.count !== 1) {

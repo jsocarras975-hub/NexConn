@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       const safeService = parsed.data.service.replace(/[&<>"]/g, "");
       void sendEmail({
         to: process.env.OWNER_EMAIL,
-        subject: `New NEXCON inquiry: ${safeService}`,
+        subject: `New N3xUs Konc3pt'z inquiry: ${safeService}`,
         html: `<p>New project inquiry from ${safeName} (${parsed.data.email}).</p><p>Service: ${safeService}</p><p>${parsed.data.details.replace(/[&<>"]/g, "")}</p>`,
       });
     }

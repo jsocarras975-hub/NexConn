@@ -73,7 +73,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     ).join("");
     const email = await sendEmail({
       to: existing.user.email,
-      subject: `NEXCON invoice ${existing.invoiceNumber}`,
+      subject: `N3xUs Konc3pt'z invoice ${existing.invoiceNumber}`,
       html: `<p>Hello ${escapeHtml(existing.user.name)},</p><p>Your invoice <strong>${escapeHtml(existing.invoiceNumber)}</strong> is ready.</p><p><strong>Total: ${escapeHtml(amount)}</strong><br>Due: ${escapeHtml(due)}</p><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th></tr></thead><tbody>${rows}</tbody></table>${invoiceUrl ? `<p><a href="${escapeHtml(invoiceUrl)}">View and print invoice</a></p>` : ""}<p>Please contact us if you have questions.</p>`,
     });
     emailSent = email.sent;

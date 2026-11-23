@@ -39,7 +39,7 @@ export default async function VerifyEmailPage({
   const copy = {
     ok: {
       title: "Email verified.",
-      body: "Your NEXCON account is confirmed. You can sign in now.",
+      body: "Your N3xUs Konc3pt'z account is confirmed. You can sign in now.",
     },
     invalid: {
       title: "This verification link is not valid.",

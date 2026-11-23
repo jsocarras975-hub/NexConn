@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Hexagon, WifiOff } from "lucide-react";
+import { WifiOff } from "lucide-react";
 import { OfflineRetry } from "@/components/offline-retry";
 
-export const metadata: Metadata = { title: "Offline | NEXCON" };
+export const metadata: Metadata = { title: "Offline | N3xUs Konc3pt'z" };
 
 export default function OfflinePage() {
   return (
     <main className="container flex min-h-[70vh] flex-col items-center justify-center py-16 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400">
-        <Hexagon size={34} />
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/icons/icon-192.png" alt="N3xUs Konc3pt'z" className="h-16 w-16 rounded-2xl" />
       <h1 className="mt-8 text-3xl font-bold">You&rsquo;re offline</h1>
       <p className="mt-3 max-w-md text-sm leading-6 text-slate-400">
-        NEXCON needs a connection to load fresh content. Pages you&rsquo;ve
+        N3xUs Konc3pt'z needs a connection to load fresh content. Pages you&rsquo;ve
         already visited are saved on this device — try one of them, or check
         your connection and try again.
       </p>
