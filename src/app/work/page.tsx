@@ -1,3 +1,9 @@
+import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
-const work=[["Commerce platform","Digital commerce","A scalable storefront concept with product discovery, secure checkout, and customer accounts."],["Community operations suite","Automation","A modular bot and workflow system for community operations and customer support."],["Client command center","SaaS platform","A unified project workspace for milestones, communication, files, and delivery."]];
-export default function Work(){return <main className="container section"><SectionHeading eyebrow="Selected work" title="Built around the problem, not the template." description="A selection of concept case studies illustrating the types of systems NEXCON can deliver. Replace these sample entries with approved client work before launch."/><div className="grid gap-5 md:grid-cols-3">{work.map((w,i)=><article key={w[0]} className="card overflow-hidden"><div className="grid-glow flex aspect-[4/3] items-end bg-gradient-to-br from-violet-500/20 via-[#111827] to-cyan-500/10 p-6"><div className="text-5xl font-light text-white/20">0{i+1}</div></div><div className="p-6"><p className="eyebrow">{w[1]}</p><h2 className="mt-3 text-xl font-semibold">{w[0]}</h2><p className="mt-3 text-sm leading-6 text-slate-400">{w[2]}</p></div></article>)}</div></main>}
+import { WORK } from "@/data/studio";
+
+export default function Work() {
+  return <main className="container section"><SectionHeading eyebrow="Selected work" title="Systems on the record." description="Eight systems, shipped. Each one has the problem, the approach, and the outcome — no concept work." />
+    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{WORK.map((w) => <article key={w.slug} className="card overflow-hidden"><Link href={`/work/${w.slug}`} className="block">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={w.image} alt={w.title} className="aspect-[16/10] w-full object-cover" /><div className="p-6"><p className="eyebrow">{w.type} · {w.year}</p><h2 className="mt-3 text-xl font-semibold">{w.title}</h2><p className="mt-1 text-xs text-slate-500">{w.client} · {w.duration} · {w.stack}</p><p className="mt-3 text-sm leading-6 text-slate-400">{w.summary}</p></div></Link></article>)}</div>
+  </main>;
+}
