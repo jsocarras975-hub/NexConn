@@ -518,6 +518,25 @@ export type JournalPost = {
 
 export const JOURNAL: JournalPost[] = [
   {
+    slug: "how-much-does-web-design-cost-san-antonio",
+    title: "How much does web design cost in San Antonio?",
+    date: "2026-11-23",
+    readMin: 5,
+    category: "Web Design / San Antonio",
+    dek: "A straight answer for a San Antonio small business: what you are actually paying for, what a $150 landing page covers, and when a custom site earns its keep.",
+    image: "/images/studio-desk.jpg",
+    body: [
+      "If you search for web design in San Antonio, you will get prices from $99 to $10,000 and no explanation for the gap. Both ends can be honest. The difference is what is included, who does the work, and who is still there the week after launch.",
+      "Here is what we charge, because a price list you have to ask for is not a price list. A landing page is $150. Web design is $750. Web development starts at $1,250. A custom Discord or Telegram bot is $99. Managed site hosting is $19.99 a month. Those are final prices for the listed job, not starting points that double in the first call.",
+      "A landing page covers one job: one offer, one page, one action. It is right when you have a single service, a launch, or a test you want live this week. It is wrong when a customer needs to compare services, read about the shop, or find you on a map and call from the same visit. That is a website, and it costs more because it does more.",
+      "What actually drives the price is not the number of pages. It is the decisions. Who writes the copy. Who takes or sources the photos. Whether a customer can book, order, or pay on the page. Whether the site has to work on a cracked phone screen on a bad connection, which is how most of your customers will meet it.",
+      "A template is the cheapest way to look like everyone else. We have written before that templates convert until they do not, and the same holds here. If your shop, your food, or your trade is the reason people come, the site should sound like the business. A visitor who has seen your hero section on three other sites has already decided you are interchangeable.",
+      "Three questions to ask any San Antonio web designer before you pay. Who owns the domain and the hosting when we are done. Who fixes it when it breaks, and what that costs. And show me a site you still maintain a year later, not just one you launched. The answers tell you more than a portfolio does.",
+      "Local search is the other half of the price question. A site that Google cannot read is a brochure in a drawer. That means a real business name, address, and phone number that match everywhere, a Google Business Profile that is actually finished, pages that load fast on a phone, and one page per service you want to be found for. None of that is magic. It is maintenance, and it is the part most cheap sites skip.",
+      "If you want a number for your job, send a brief. Tell us what the site has to do in 90 days, what you already have, and what has to be true after launch. We will send back a smaller brief and a fixed price. You can reach the desk at studio@n3xuskonc3ptz.com or 210-275-1837, Monday to Friday, 09:00 to 18:00.",
+    ],
+  },
+  {
     slug: "rise-of-agentic-coding-ai-software-development",
     title: "Agentic coding is not a junior hire",
     date: "2026-06-21",
