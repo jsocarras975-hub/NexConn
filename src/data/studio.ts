@@ -518,6 +518,24 @@ export type JournalPost = {
 
 export const JOURNAL: JournalPost[] = [
   {
+    slug: "san-antonio-small-business-website-checklist",
+    title: "The San Antonio small business website checklist",
+    date: "2026-11-24",
+    readMin: 4,
+    category: "Web Design / San Antonio",
+    dek: "Ten things to check on your own site before you spend a dollar on ads — from the phone number to the map pin, in the order that matters.",
+    image: "/images/hero-studio.jpg",
+    body: [
+      "If you run a small business in San Antonio, your website is the first person a customer meets — and it works the hours you don’t. This checklist is for a small business website San Antonio owners depend on every day: the site for the shop, the truck, the studio, or the restaurant. Open it on your phone and work through it. If an item fails, fix it before you spend anything on ads.",
+      "One: the phone number. It should be at the top of every page, and tapping it should start a call. If a customer has to hunt for it or copy it into a dialer, they are gone. Two: the hours. They should match what is on your door and what Google shows, including holidays and the days you close early. Three: the address and the map. A customer should be able to tap once and get directions. If the address on your site disagrees with your Google Business Profile, Google trusts neither, and neither will a customer driving across town.",
+      "Four: one page for each thing you actually sell. A restaurant needs a menu page, a shop needs its services, a contractor needs each trade spelled out. Lumping everything onto one page means Google has nothing to show for a specific search, and a visitor has nothing to land on. Five: say what you do in the words your customers use. Nobody searches for fancy phrases. They search for tacos near me, or an electrician in Alamo Heights. Write the way your customers talk, and the site will be found by the people it is for.",
+      "Six: photos of the real place. Your food, your shop, your crew, your work. Stock photos of a smiling stranger do not sell a South Texas business. A phone camera and good light are enough. If the photos on the site are not of your business, a visitor who walks in will feel misled before you have said a word.",
+      "Seven: speed on a phone. Most of your visitors are on a phone, often on a bad connection. If the page takes more than a few seconds to show something useful, they leave — and they do not come back to tell you why. Big images are usually the cause. Eight: one clear action per page. Call, book, order, or get a quote. A page that asks a visitor to do four things asks them to do nothing. Check the form actually submits, too. A form that swallows messages is worse than no form, because you will never know what you lost.",
+      "Nine: someone is in charge after launch. A site is not finished the day it goes live. Prices change, hours change, links break, and software needs updates. Decide who does that before launch, not after the first broken page. Managed site hosting is $19.99 a month with us, which covers the box, the backups, and the updates — the point is that someone is watching it. Ten: you own it. The domain is in your name, the hosting is in your name, and you can walk away with the site. If a vendor holds the keys, you are renting your own business card.",
+      "What does it cost to get this right? A landing page is $150 and covers one offer on one page — right when you have a single service and need it live this week. A full website is $750 for web design, and $1,250 for web development when the site has to do real work like booking, ordering, or payments. Those are final prices, not estimates that grow in the first call. If your site fails half this list, you do not need a new site — you need someone to fix the list. Send a brief to studio@n3xuskonc3ptz.com or call 210-275-1837, and tell us which items failed. We will tell you what it takes to fix them, in plain terms, before you pay anything.",
+    ],
+  },
+  {
     slug: "how-much-does-web-design-cost-san-antonio",
     title: "How much does web design cost in San Antonio?",
     date: "2026-11-23",
