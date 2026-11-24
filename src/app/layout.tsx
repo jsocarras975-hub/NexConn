@@ -3,6 +3,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PwaInstall } from "@/components/pwa-install";
+import { TrafficBeacon } from "@/components/traffic-beacon";
 import { STUDIO } from "@/data/studio";
 import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
@@ -73,6 +74,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         rel="stylesheet"
       />
     </head>
-    <body><SiteHeader />{children}<SiteFooter /><PwaInstall /></body>
+    <body><SiteHeader />{children}<SiteFooter /><PwaInstall /><TrafficBeacon /></body>
   </html>;
 }

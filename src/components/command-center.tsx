@@ -44,6 +44,13 @@ type Data = {
   topProducts: TopProduct[];
 };
 type Health = { status: string; service: string; timestamp: string };
+type Traffic = {
+  totalViews: number; uniqueVisitors: number; todayViews: number; todayVisitors: number;
+  daily: { date: string; views: number; visitors: number }[];
+  topPages: { name: string; views: number }[];
+  topReferrers: { name: string; views: number }[];
+  topCountries: { name: string; views: number }[];
+};
 const money = (cents: number, currency: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
 const SEGMENT_LABEL: Record<string, string> = {
   ACTIVE: "Active",
@@ -84,6 +91,8 @@ export function CommandCenter() {
   const [loading, setLoading] = useState(true);
   const [health, setHealth] = useState<Health | null>(null);
   const [healthError, setHealthError] = useState("");
+  const [traffic, setTraffic] = useState<Traffic | null>(null);
+  const [trafficError, setTrafficError] = useState("");
   async function load() {
     setLoading(true); setError("");
     try {
@@ -100,6 +109,12 @@ export function CommandCenter() {
       .then((r) => r.json())
       .then((b: Health) => setHealth(b))
       .catch(() => setHealthError("Health check failed."));
+  }, []);
+  useEffect(() => {
+    fetch("/api/admin/traffic", { cache: "no-store" })
+      .then((r) => { if (!r.ok) throw new Error("Traffic data failed to load."); return r.json(); })
+      .then((b: Traffic) => setTraffic(b))
+      .catch(() => setTrafficError("Traffic data failed to load."));
   }, []);
   if (loading) return <div className="card p-8 text-sm text-slate-400">Loading command center…</div>;
   if (error) return <div className="card p-8"><p role="alert" className="text-sm text-rose-300">{error}</p><button className="btn-secondary mt-4" onClick={() => void load()}>Try again</button></div>;
@@ -139,6 +154,46 @@ export function CommandCenter() {
         <Kpi icon={Users} label="Active customers" value={String(k.activeCustomers)} sub={`${k.totalClients} client accounts · paid within 30 days`} />
       </div>
       <p className="text-xs text-slate-500">Figures in {k.currency}. Other currencies appear in the revenue tables below.</p>
+    </section>
+
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">Web traffic — last 30 days</h2>
+      {trafficError ? <p className="text-sm text-rose-300">{trafficError}</p>
+      : !traffic ? <p className="text-sm text-slate-400">Loading traffic…</p>
+      : <>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Kpi icon={Activity} label="Page views — 30 days" value={traffic.totalViews.toLocaleString()} sub={`${traffic.uniqueVisitors.toLocaleString()} unique visitors`} />
+          <Kpi icon={Users} label="Unique visitors — 30 days" value={traffic.uniqueVisitors.toLocaleString()} sub="By hashed IP, no addresses stored" />
+          <Kpi icon={TrendingUp} label="Page views — today" value={traffic.todayViews.toLocaleString()} sub={`${traffic.todayVisitors.toLocaleString()} unique visitors today`} />
+          <Kpi icon={Target} label="Top page — 30 days" value={traffic.topPages[0] ? traffic.topPages[0].name : "—"} sub={traffic.topPages[0] ? `${traffic.topPages[0].views.toLocaleString()} views` : "No views yet"} />
+        </div>
+        <div className="card p-6">
+          <h3 className="font-semibold">Daily page views</h3>
+          <div className="mt-6 flex items-end gap-1 sm:gap-2" style={{ height: 140 }}>
+            {traffic.daily.map((d) => <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
+              <div className="flex h-[110px] w-full items-end justify-center">
+                <div className="w-full max-w-3 rounded-t bg-cyan-400" style={{ height: `${Math.max(d.views > 0 ? 3 : 0, (d.views / Math.max(1, ...traffic.daily.map((x) => x.views))) * 100)}%` }} title={`${d.date}: ${d.views} views, ${d.visitors} visitors`} />
+              </div>
+              <span className="text-[9px] text-slate-500">{d.date.slice(5)}</span>
+            </div>)}
+          </div>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="card p-6">
+            <h3 className="font-semibold">Top pages</h3>
+            {traffic.topPages.length ? <ul className="mt-4 space-y-3">{traffic.topPages.map((p, i) => <li key={p.name} className="flex items-baseline justify-between gap-3 text-sm"><span className="min-w-0 truncate"><span className="mr-2 font-semibold text-slate-500">#{i + 1}</span><span className="font-mono text-xs">{p.name}</span></span><span className="shrink-0 font-semibold tabular-nums">{p.views.toLocaleString()}</span></li>)}</ul> : <p className="mt-4 text-sm text-slate-500">No page views yet.</p>}
+          </div>
+          <div className="card p-6">
+            <h3 className="font-semibold">Top referrers</h3>
+            {traffic.topReferrers.length ? <ul className="mt-4 space-y-3">{traffic.topReferrers.map((r, i) => <li key={r.name} className="flex items-baseline justify-between gap-3 text-sm"><span className="min-w-0 truncate"><span className="mr-2 font-semibold text-slate-500">#{i + 1}</span>{r.name}</span><span className="shrink-0 font-semibold tabular-nums">{r.views.toLocaleString()}</span></li>)}</ul> : <p className="mt-4 text-sm text-slate-500">No page views yet.</p>}
+          </div>
+          <div className="card p-6">
+            <h3 className="font-semibold">Top countries</h3>
+            {traffic.topCountries.length ? <ul className="mt-4 space-y-3">{traffic.topCountries.map((c, i) => <li key={c.name} className="flex items-baseline justify-between gap-3 text-sm"><span className="min-w-0 truncate"><span className="mr-2 font-semibold text-slate-500">#{i + 1}</span>{c.name}</span><span className="shrink-0 font-semibold tabular-nums">{c.views.toLocaleString()}</span></li>)}</ul> : <p className="mt-4 text-sm text-slate-500">No country data yet.</p>}
+          </div>
+        </div>
+        <p className="text-xs text-slate-500">First-party only — no cookies, no third-party tracker. IPs are stored only as a SHA-256 hash so unique visitors can be counted without keeping addresses. Admin, owner, portal, auth, and API routes are never counted. Tracking starts when this deploys; there is no backfill.</p>
+      </>}
     </section>
 
     <section className="grid gap-4 lg:grid-cols-3">
