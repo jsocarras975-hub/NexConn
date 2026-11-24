@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { STUDIO, PRINCIPLES, BILLING, STACK, WORK } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/about", "About", "Juan Socarras founded N3xUs Konc3pt'z in South Texas and still does the work: custom websites, apps, Discord and Telegram bots, SEO, and managed hosting.");
 
 const onRecord = WORK.filter((w) => ["elite-crete-systems-south-tx-web-platform", "nexus-moderation-bot", "wicked-smokes"].includes(w.slug));
 

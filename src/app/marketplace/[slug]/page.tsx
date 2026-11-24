@@ -3,7 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/format";
 import { SectionHeading } from "@/components/section-heading";
 import { AddToCartButton } from "@/components/add-to-cart-button";
+import { pageMetadata } from "@/lib/seo";
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const p = await prisma.product.findUnique({ where: { slug } });
+  if (!p || !p.active) return undefined;
+  return pageMetadata(`/marketplace/${slug}`, p.name, p.description);
+}
+
 export default async function ProductPage({params}:{params:Promise<{slug:string}>}) {
  const {slug}=await params;const p=await prisma.product.findUnique({where:{slug}});
  if(!p||!p.active)notFound();

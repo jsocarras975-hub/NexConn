@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { SERVICES, SERVICE_GROUPS } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/services", "Services", "Final catalog prices, no starting-at games. Web design $750, web development $1,250, landing page $150, custom bots $99, hosting from $19.99/mo.");
 
 export default function Services() {
   return <main className="container section"><SectionHeading eyebrow="Services" title="A catalog, not a mystery." description="Fourteen lines in four groups. Every price is on the page — final prices for a bounded job. Auth, migrations, or a second language are scoped on top." />

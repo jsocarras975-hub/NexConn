@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
 import { JOURNAL } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/journal", "Journal", "Notes from the desk: how we build, what we ship, and what we learned.");
 
 export default function Journal() {
   return <main className="container section"><SectionHeading eyebrow="Journal" title="Notes from the N3xUs desk." description="Notes on bots, type, hiring, hosting, and how a small studio actually ships. Written by Juan Socarras." />

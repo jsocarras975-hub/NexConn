@@ -3,6 +3,14 @@ import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { notFound } from "next/navigation";
 import { SectionHeading } from "@/components/section-heading";
 import { SERVICES } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const service = SERVICES.find((s) => s.slug === slug);
+  if (!service) return undefined;
+  return pageMetadata(`/services/${slug}`, service.name, service.pitch);
+}
 
 export function generateStaticParams() {
   return SERVICES.map((s) => ({ slug: s.slug }));

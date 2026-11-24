@@ -3,6 +3,14 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { SectionHeading } from "@/components/section-heading";
 import { WORK } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const item = WORK.find((w) => w.slug === slug);
+  if (!item) return undefined;
+  return pageMetadata(`/work/${slug}`, item.title, item.summary);
+}
 
 export function generateStaticParams() {
   return WORK.map((w) => ({ slug: w.slug }));

@@ -4,13 +4,49 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PwaInstall } from "@/components/pwa-install";
 import { STUDIO } from "@/data/studio";
+import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+
+const siteDescription = STUDIO.metaDescription;
+
+// Structured data: the studio as a ProfessionalService, so search engines
+// can show the phone, email, and founder in rich results.
+const orgJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  name: SITE_NAME,
+  description: siteDescription,
+  url: SITE_URL,
+  telephone: "+1-210-275-1837",
+  email: STUDIO.email,
+  founder: { "@type": "Person", name: STUDIO.founder, jobTitle: STUDIO.role },
+  address: { "@type": "PostalAddress", addressRegion: "TX", addressCountry: "US" },
+  priceRange: STUDIO.priceRange,
+};
 
 export const metadata: Metadata = {
   title: { default: "N3xUs Konc3pt'z — Web Design, Development & Hosting", template: "%s | N3xUs Konc3pt'z" },
-  description: STUDIO.metaDescription,
-  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+  description: siteDescription,
+  metadataBase: new URL(SITE_URL),
+  keywords: ["web design San Antonio", "web development South Texas", "custom website", "Discord bot", "Telegram bot", "managed hosting", "SEO", "N3xUs Konc3pt'z"],
+  authors: [{ name: STUDIO.founder }],
+  creator: STUDIO.founder,
+  publisher: SITE_NAME,
+  robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",
-  openGraph: { title: "N3xUs Konc3pt'z", description: STUDIO.metaDescription, type: "website" },
+  openGraph: {
+    title: SITE_NAME,
+    description: siteDescription,
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    type: "website",
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: `${SITE_NAME} — ${siteDescription}` }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: siteDescription,
+    images: [OG_IMAGE],
+  },
   appleWebApp: { capable: true, title: "N3xUs Konc3pt'z", statusBarStyle: "black-translucent" },
   // Next 15 emits the standard "mobile-web-app-capable"; older iOS Safari
   // still looks for the Apple-prefixed name, so send both.
@@ -29,6 +65,7 @@ export const viewport: Viewport = { themeColor: "#080b12" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en">
     <head>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link

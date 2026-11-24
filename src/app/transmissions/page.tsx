@@ -1,5 +1,8 @@
 import { SectionHeading } from "@/components/section-heading";
 import { TESTIMONIALS, STUDIO } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/transmissions", "Transmissions", "Short updates from the studio — shipped work, new services, and lab notes.");
 
 export default function Transmissions() {
   return <main className="container section"><SectionHeading eyebrow="Transmissions" title="Client reviews & transmissions." description={`${TESTIMONIALS.length} reviews, all 5/5. ${STUDIO.rating}.`} />

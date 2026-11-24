@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/format";
 import { SectionHeading } from "@/components/section-heading";
 import { AddToCartButton } from "@/components/add-to-cart-button";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/marketplace", "Marketplace", "Digital goods and services from the studio and the community — bot templates, UI kits, and more.");
 export const dynamic = "force-dynamic";
 export default async function Marketplace(){
  const products=await prisma.product.findMany({where:{active:true},orderBy:[{featured:"desc"},{createdAt:"desc"}]});

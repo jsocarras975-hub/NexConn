@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
 import { WORK } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/work", "Work", "Case studies from the desk: ecommerce storefronts, contractor platforms, bots, and hosting — what was built and what it did.");
 
 export default function Work() {
   return <main className="container section"><SectionHeading eyebrow="Selected work" title="Systems on the record." description="Eight systems, shipped. Each one has the problem, the approach, and the outcome — no concept work." />

@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { STUDIO, PRINCIPLES, BILLING, PIPELINE, IN_SCOPE, OUT_OF_SCOPE, STACK, FAQS } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/studio", "How the Desk Runs", "How N3xUs Konc3pt'z works: one desk, three jobs, no handoff tax. The process, the prices, and the promises.");
 
 export default function Studio() {
   return <main className="container section">

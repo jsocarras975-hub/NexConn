@@ -5,6 +5,9 @@ import { money } from "@/lib/format";
 import { SectionHeading } from "@/components/section-heading";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { STORE_PRODUCTS } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/store", "Store", "Digital goods from the studio: bot templates, UI kits, and scripts — one-production license, instant download.");
 
 export default async function Store() {
   const slugs = STORE_PRODUCTS.map((p) => p.slug);

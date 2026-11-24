@@ -2,6 +2,14 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { JOURNAL } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = JOURNAL.find((p) => p.slug === slug);
+  if (!post) return undefined;
+  return pageMetadata(`/journal/${slug}`, post.title, post.dek);
+}
 
 export function generateStaticParams() {
   return JOURNAL.map((p) => ({ slug: p.slug }));

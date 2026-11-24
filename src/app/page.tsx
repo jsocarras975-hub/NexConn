@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Bot, Boxes, Clock, Layers3, ShieldCheck, Sparkles, Store, UserRound, Workflow } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { SERVICES, SERVICE_GROUPS, WORK, PIPELINE, TESTIMONIALS, STUDIO } from "@/data/studio";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata("/", "N3xUs Konc3pt'z — Web Design, Development & Hosting", "South Texas digital studio for custom websites, apps, Discord and Telegram bots, SEO, and managed hosting. Design, development, and deployment from one desk.");
 
 const featuredWork = WORK.filter((w) => ["elite-crete-systems-south-tx-web-platform", "nexus-moderation-bot", "wicked-smokes", "n3xus-konc3pt-z"].includes(w.slug));
 
