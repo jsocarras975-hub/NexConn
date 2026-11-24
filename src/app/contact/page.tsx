@@ -52,8 +52,8 @@ export default function Contact() {
             <p className="text-sm font-semibold">Reach the desk</p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
               <li><a href="mailto:studio@n3xuskonc3ptz.com" className="text-cyan-300">studio@n3xuskonc3ptz.com</a> — Juan answers it himself</li>
-              <li><a href="https://discord.gg/3UHWMa7rC" target="_blank" rel="noreferrer" className="text-cyan-300">Discord</a> — join the server</li>
-              <li><a href="https://t.me/n3xusg" target="_blank" rel="noreferrer" className="text-cyan-300">Telegram — @n3xusg</a></li>
+              <li><a href="mailto:j.socarras@n3xuskonc3ptz.com" className="text-cyan-300">j.socarras@n3xuskonc3ptz.com</a></li>
+              <li><a href="tel:+12102751837" className="text-cyan-300">210-275-1837</a></li>
               <li>Desk Mon–Fri 09:00–18:00, America/Chicago · first reply within 24h on weekdays</li>
             </ul>
           </div>

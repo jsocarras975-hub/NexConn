@@ -14,9 +14,9 @@ export const STUDIO = {
   role: "Founder & Principal",
   location: "South Texas",
   email: "studio@n3xuskonc3ptz.com",
-  discord: "https://discord.gg/3UHWMa7rC",
-  telegram: "https://t.me/n3xusg",
-  telegramHandle: "@n3xusg",
+  emailJuan: "j.socarras@n3xuskonc3ptz.com",
+  phone: "210-275-1837",
+  phoneHref: "tel:+12102751837",
   hours: "Mon–Fri 09:00–18:00",
   timezone: "America/Chicago",
   firstResponse: "24h on weekdays",
@@ -760,7 +760,7 @@ export const FAQS = [
   },
   {
     q: "How do we start?",
-    a: "Open a brief: what you need (Build / Automate / Host / Amplify), budget band, timing, and a paragraph of notes. Weekday first response within 24 hours — often faster on Discord or Telegram (@n3xusg). If we are wrong for it, we say so.",
+    a: "Open a brief: what you need (Build / Automate / Host / Amplify), budget band, timing, and a paragraph of notes. Weekday first response within 24 hours. If we are wrong for it, we say so.",
   },
   {
     q: "Do you take equity or revenue share?",

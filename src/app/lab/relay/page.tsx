@@ -11,7 +11,7 @@ type Msg = { from: "you" | "relay"; text: string };
 function reply(input: string): string {
   const t = input.toLowerCase();
   if (/\b(hour|open|close|when|desk)\b/.test(t))
-    return `The desk is on ${STUDIO.hours}, ${STUDIO.timezone}. First reply within 24h on weekdays — often faster on Discord or Telegram.`;
+    return `The desk is on ${STUDIO.hours}, ${STUDIO.timezone}. First reply within 24h on weekdays.`;
   if (/\b(price|cost|much|rate|pricing)\b/.test(t))
     return "Catalog prices: web design $750, web development $1,250, a custom Discord or Telegram bot $99, landing page $150, site hosting $19.99/mo, bot hosting $9.99/mo. Full catalog on /services.";
   if (/\b(service|menu|offer|what.*(do|sell)|bot|website|hosting|seo)\b/.test(t))

@@ -50,7 +50,7 @@ export default function Book() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Unable to submit.");
-      setResult("Your brief has been received. We reply within one weekday — often faster on Discord or Telegram.");
+      setResult("Your brief has been received. We reply within one weekday.");
     } catch (err) {
       setResult(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -64,7 +64,7 @@ export default function Book() {
     `rounded-full border px-4 py-2.5 text-sm font-semibold ${selected ? "border-cyan-300/60 bg-cyan-400/15 text-white" : "border-white/10 text-slate-300 hover:border-white/25"}`;
 
   return <main className="container section">
-    <SectionHeading eyebrow="Start a project" title="Open a brief." description="Four questions. Weekday first response within 24 hours — often faster on Discord or Telegram. If we are the wrong studio, we say so." />
+    <SectionHeading eyebrow="Start a project" title="Open a brief." description="Four questions. Weekday first response within 24 hours. If we are the wrong studio, we say so." />
     <div className="mx-auto max-w-2xl">
       <p className="mb-6 text-xs font-bold uppercase tracking-widest text-slate-500">Step {step} of 4</p>
 
