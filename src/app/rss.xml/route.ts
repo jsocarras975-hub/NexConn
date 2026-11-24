@@ -1,5 +1,9 @@
 import { JOURNAL, STUDIO } from "@/data/studio";
 
+// Always build fresh from the data — never serve a cached feed, so a new
+// journal post shows up immediately.
+export const dynamic = "force-dynamic";
+
 const base = (process.env.APP_URL || "https://n3xuskonc3ptz.com").replace(/\/$/, "");
 
 function esc(s: string) {

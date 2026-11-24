@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { JOURNAL } from "@/data/studio";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, SITE_URL } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -20,7 +20,21 @@ export default async function JournalArticle({ params }: { params: Promise<{ slu
   const post = JOURNAL.find((p) => p.slug === slug);
   if (!post) notFound();
   const others = JOURNAL.filter((p) => p.slug !== slug).slice(0, 3);
+  // Article structured data, built from the post itself — every new daily
+  // post carries it automatically, no manual step.
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.dek,
+    image: `${SITE_URL}${post.image}`,
+    datePublished: post.date,
+    author: { "@type": "Person", name: "Juan Socarras", jobTitle: "Founder & Principal" },
+    publisher: { "@type": "Organization", name: "N3xUs Konc3pt'z", url: SITE_URL },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/journal/${slug}` },
+  };
   return <main className="container section">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
     <Link href="/journal" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={15} /> All journal</Link>
     <article className="mx-auto mt-10 max-w-2xl">
       <p className="eyebrow">{post.category} · {post.date} · {post.readMin} min read</p>
