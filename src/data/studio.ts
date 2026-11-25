@@ -136,6 +136,22 @@ export const SERVICES: Service[] = [
     ],
   },
   {
+    slug: "native-android-app-development",
+    name: "Native Android App Development",
+    group: "Build",
+    price: "$300",
+    pitch:
+      "A real native app for your business — not a website in a wrapper. Ordering, booking, loyalty, or a tool your crew actually uses, built with the Android SDK and signed, ready to install. This is the same bench that built SuperFiles and RemotePhone.",
+    deliverables: [
+      "Native Android build — no web wrappers",
+      "Screens designed around your workflow",
+      "Local database and offline storage",
+      "Account sign-in and push notifications",
+      "Signed release APK, ready to install",
+      "Google Play submission support and source handoff",
+    ],
+  },
+  {
     slug: "discord-bots",
     name: "Custom Discord Bots",
     group: "Automate",
@@ -730,6 +746,7 @@ export const PRINCIPLES = [
 export const IN_SCOPE = [
   "Marketing sites & storefronts",
   "Product UI / internal tools",
+  "Native Android apps",
   "Discord & Telegram systems",
   "APIs, workers, Postgres",
   "Managed hosting & process watch",
@@ -737,7 +754,7 @@ export const IN_SCOPE = [
 ];
 
 export const OUT_OF_SCOPE = [
-  "Native iOS / Android apps",
+  "Native iOS apps",
   "Print, packaging, fashion",
   "Paid media spend management at scale",
 ];
@@ -751,6 +768,7 @@ export const STACK = [
   { name: "Discord API", note: "Slash commands, economy, moderation" },
   { name: "Telegram API", note: "Menus, shop desks, broadcasts" },
   { name: "Stripe", note: "When money has to move" },
+  { name: "Android SDK", note: "Native apps — signed, Play-ready" },
 ];
 
 export const FAQS = [
