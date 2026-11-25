@@ -5,10 +5,16 @@
 // missing TURNSTILE_SECRET_KEY fails the check closed (see src/lib/captcha.ts).
 // The widget token is single-use; forms remount this component (via `key`)
 // after a successful submit so a fresh challenge is shown.
+//
+// The script URL must be the versioned one: the unversioned
+// /turnstile/api.js path was retired by Cloudflare and returns 404, which
+// silently left every form without a widget (found 2026-11-25).
 
 "use client";
 
 import { useEffect, useRef } from "react";
+
+const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js";
 
 declare global {
   interface Window {
@@ -55,13 +61,13 @@ export function Turnstile({
       renderWidget();
     } else {
       const existing = document.querySelector(
-        'script[src="https://challenges.cloudflare.com/turnstile/api.js"]',
+        `script[src="${SCRIPT_URL}"]`,
       ) as HTMLScriptElement | null;
       if (existing) {
         existing.addEventListener("load", renderWidget);
       } else {
         const script = document.createElement("script");
-        script.src = "https://challenges.cloudflare.com/turnstile/api.js";
+        script.src = SCRIPT_URL;
         script.async = true;
         script.defer = true;
         script.onload = renderWidget;
