@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import Stripe from "stripe";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sendInvoicePaidEmail, sendOrderReceiptEmail, sendRefundEmail } from "@/lib/transactional-email";
 export const runtime = "nodejs";
 
 type Tx = Prisma.TransactionClient;
 
-async function settleInvoice(tx: Tx, session: Stripe.Checkout.Session) {
+async function settleInvoice(tx: Tx, session: Stripe.Checkout.Session): Promise<string | null> {
   const id = session.metadata?.invoiceId;
-  if (!id || session.payment_status !== "paid") return;
+  if (!id || session.payment_status !== "paid") return null;
   const inv = await tx.invoice.findUnique({ where: { id }, select: { id: true, status: true, stripeCheckoutSession: true, totalCents: true, currency: true } });
   if (!inv) throw new Error(`Invoice ${id} not found for Stripe session ${session.id}.`);
   if (!["SENT", "OVERDUE"].includes(inv.status)) {
@@ -29,7 +30,7 @@ async function settleInvoice(tx: Tx, session: Stripe.Checkout.Session) {
         },
       },
     });
-    return;
+    return null;
   }
   // A mismatch is a permanent condition, not a transient failure: the money
   // was collected by Stripe, but it does not match the local record, so the
@@ -37,11 +38,11 @@ async function settleInvoice(tx: Tx, session: Stripe.Checkout.Session) {
   // the webhook forever. Record it and return 200 instead.
   if (inv.stripeCheckoutSession !== session.id) {
     await tx.auditLog.create({ data: { action: "INVOICE_SESSION_MISMATCH", target: id, metadata: { checkoutSessionId: session.id, expectedSessionId: inv.stripeCheckoutSession, amountTotal: session.amount_total, currency: session.currency } } });
-    return;
+    return null;
   }
   if (session.amount_total !== inv.totalCents || (session.currency || "").toLowerCase() !== inv.currency.toLowerCase()) {
     await tx.auditLog.create({ data: { action: "INVOICE_AMOUNT_MISMATCH", target: id, metadata: { checkoutSessionId: session.id, paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null, amountTotal: session.amount_total, currency: session.currency, expectedTotalCents: inv.totalCents, expectedCurrency: inv.currency } } });
-    return;
+    return null;
   }
   const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;
   const changed = await tx.invoice.updateMany({
@@ -49,24 +50,25 @@ async function settleInvoice(tx: Tx, session: Stripe.Checkout.Session) {
     data: { status: "PAID", paidAt: new Date(), stripePaymentIntent: pi },
   });
   if (changed.count) await tx.auditLog.create({ data: { action: "INVOICE_PAID_BY_STRIPE", target: id, metadata: { checkoutSessionId: session.id, paymentIntentId: pi, amountTotal: session.amount_total, currency: session.currency } } });
+  return changed.count ? id : null;
 }
 
-async function settleOrder(tx: Tx, session: Stripe.Checkout.Session) {
+async function settleOrder(tx: Tx, session: Stripe.Checkout.Session): Promise<string | null> {
   const orderId = session.metadata?.orderId;
-  if (!orderId || session.payment_status !== "paid") return;
+  if (!orderId || session.payment_status !== "paid") return null;
   const order = await tx.order.findUnique({ where: { id: orderId }, select: { id: true, status: true, stripeCheckoutSession: true, totalCents: true, currency: true } });
   if (!order) {
     await tx.auditLog.create({ data: { action: "ORDER_NOT_FOUND_FOR_STRIPE_SESSION", target: orderId, metadata: { checkoutSessionId: session.id, amountTotal: session.amount_total, currency: session.currency } } });
-    return;
+    return null;
   }
-  if (order.status !== "PENDING") return;
+  if (order.status !== "PENDING") return null;
   if (order.stripeCheckoutSession !== session.id) {
     await tx.auditLog.create({ data: { action: "ORDER_SESSION_MISMATCH", target: orderId, metadata: { checkoutSessionId: session.id, expectedSessionId: order.stripeCheckoutSession, amountTotal: session.amount_total, currency: session.currency } } });
-    return;
+    return null;
   }
   if (session.amount_total !== order.totalCents || (session.currency || "").toLowerCase() !== order.currency.toLowerCase()) {
     await tx.auditLog.create({ data: { action: "ORDER_AMOUNT_MISMATCH", target: orderId, metadata: { checkoutSessionId: session.id, paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null, amountTotal: session.amount_total, currency: session.currency, expectedTotalCents: order.totalCents, expectedCurrency: order.currency } } });
-    return;
+    return null;
   }
   const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;
   const changed = await tx.order.updateMany({
@@ -86,6 +88,7 @@ async function settleOrder(tx: Tx, session: Stripe.Checkout.Session) {
       },
     });
   }
+  return changed.count ? orderId : null;
 }
 
 export async function POST(req: Request) {
@@ -121,6 +124,12 @@ export async function POST(req: Request) {
     }
   }
 
+  // What the transaction settled, so receipts/refund notices can be sent
+  // after it commits (never inside it).
+  let settledOrderId: string | null = null;
+  let settledInvoiceId: string | null = null;
+  let refundNotice: { orderId?: string; invoiceId?: string; refundedCents: number; totalCents: number; currency: string } | null = null;
+
   try {
     // One transaction covers the event-ledger claim, the order/invoice
     // transition and the processed timestamp. If anything fails, the whole
@@ -134,8 +143,8 @@ export async function POST(req: Request) {
 
       if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
         const session = event.data.object as Stripe.Checkout.Session;
-        if (session.metadata?.invoiceId) await settleInvoice(tx, session);
-        else await settleOrder(tx, session);
+        if (session.metadata?.invoiceId) settledInvoiceId = await settleInvoice(tx, session);
+        else settledOrderId = await settleOrder(tx, session);
       }
       if (event.type === "charge.refunded") {
         const charge = event.data.object as Stripe.Charge;
@@ -146,7 +155,7 @@ export async function POST(req: Request) {
             .reduce((sum, refund) => sum + refund.amount, 0);
           const order = await tx.order.findFirst({
             where: { stripePaymentIntent: paymentIntentId },
-            select: { id: true, totalCents: true, status: true },
+            select: { id: true, totalCents: true, status: true, currency: true },
           });
           if (order) {
             for (const refund of refunds) {
@@ -180,11 +189,12 @@ export async function POST(req: Request) {
                 metadata: { chargeId: charge.id, refundedCents, totalCents: order.totalCents, refundCount: refunds.length },
               },
             });
+            if (refundedCents > 0) refundNotice = { orderId: order.id, refundedCents, totalCents: order.totalCents, currency: order.currency };
           } else {
             // The same charge can belong to an invoice, not an order.
             const invoice = await tx.invoice.findFirst({
               where: { stripePaymentIntent: paymentIntentId },
-              select: { id: true, totalCents: true, status: true },
+              select: { id: true, totalCents: true, status: true, currency: true },
             });
             if (invoice) {
               await tx.invoice.updateMany({
@@ -201,6 +211,7 @@ export async function POST(req: Request) {
                   metadata: { chargeId: charge.id, refundedCents, totalCents: invoice.totalCents, refundCount: refunds.length },
                 },
               });
+              if (refundedCents > 0) refundNotice = { invoiceId: invoice.id, refundedCents, totalCents: invoice.totalCents, currency: invoice.currency };
             }
           }
         }
@@ -247,6 +258,23 @@ export async function POST(req: Request) {
       }
       await tx.stripeWebhookEvent.update({ where: { id: ledger.id }, data: { processedAt: new Date() } });
     });
+    // Receipts and refund notices go out only after the transaction commits,
+    // so a rolled-back event never emails about money that was not recorded.
+    // Sent via after() so Stripe still gets its 200 immediately.
+    if (settledOrderId || settledInvoiceId || refundNotice) {
+      const orderId = settledOrderId;
+      const invoiceId = settledInvoiceId;
+      const notice = refundNotice;
+      after(async () => {
+        try {
+          if (orderId) await sendOrderReceiptEmail(orderId);
+          if (invoiceId) await sendInvoicePaidEmail(invoiceId);
+          if (notice) await sendRefundEmail(notice);
+        } catch (error) {
+          console.error("Post-webhook transactional email failed", error);
+        }
+      });
+    }
     return NextResponse.json({ received: true });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {

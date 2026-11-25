@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import Stripe from "stripe";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { sendInvoicePaidEmail } from "@/lib/transactional-email";
 
 export const runtime = "nodejs";
 const schema = z.object({ status: z.enum(["SENT", "PAID", "VOID"]) });
@@ -114,6 +115,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         target: id,
         metadata: { reason: email.sent ? null : email.reason || "Email provider unavailable." },
       },
+    });
+  }
+
+  // A hand-marked-paid invoice gets the same receipt email as a Stripe-paid
+  // one, sent after the response.
+  if (parsed.data.status === "PAID" && existing.user) {
+    after(async () => {
+      try {
+        await sendInvoicePaidEmail(id);
+      } catch (error) {
+        console.error("Invoice paid receipt email failed", error);
+      }
     });
   }
 

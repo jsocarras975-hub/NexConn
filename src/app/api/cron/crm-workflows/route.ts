@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { runOverdueTaskWorkflows } from "@/lib/crm-workflows";
+import { runInvoiceOverdueSweep } from "@/lib/invoice-reminders";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -26,6 +27,15 @@ export async function GET(request: Request) {
   }
   try {
     const result = await runOverdueTaskWorkflows();
+    // Invoice sweep: flip past-due invoices to OVERDUE and send the 3/7/14
+    // day reminders. Its own try/catch so a mail problem never blocks the
+    // workflow run or the retention pass below.
+    let invoiceSweep = { markedOverdue: 0, remindersSent: 0 };
+    try {
+      invoiceSweep = await runInvoiceOverdueSweep();
+    } catch (error) {
+      console.error("Invoice overdue sweep failed", error);
+    }
     // Retention: the append-only tables grow without bounds. Page views and
     // webhook events are only useful for 90 days; audit rows are kept a year.
     const now = Date.now();
@@ -35,7 +45,7 @@ export async function GET(request: Request) {
       prisma.auditLog.deleteMany({ where: { createdAt: { lt: new Date(now - 365 * 86400000) } } }),
     ]);
     return NextResponse.json(
-      { ok: true, ...result, pruned: { pageViews: pageViews.count, webhookEvents: webhookEvents.count, auditLogs: auditLogs.count } },
+      { ok: true, ...result, invoices: invoiceSweep, pruned: { pageViews: pageViews.count, webhookEvents: webhookEvents.count, auditLogs: auditLogs.count } },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

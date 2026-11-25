@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { sendTicketReplyEmail } from "@/lib/transactional-email";
 
 const schema = z.object({ body: z.string().trim().min(1).max(4000) });
 
@@ -46,6 +47,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   await prisma.ticket.update({
     where: { id },
     data: { status: isOwner ? "WAITING" : "IN_PROGRESS" },
+  });
+  // Notify the other side by email after the response: the ticket owner when
+  // staff replied, the studio inbox when the client replied.
+  after(async () => {
+    try {
+      await sendTicketReplyEmail(id, isOwner);
+    } catch (error) {
+      console.error("Ticket reply email failed", error);
+    }
   });
   return NextResponse.json({ message }, { status: 201 });
 }

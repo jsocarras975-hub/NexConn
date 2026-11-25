@@ -64,6 +64,16 @@ export function CrmWorkspace() {
     } catch(e) { setError(e instanceof Error ? e.message : "CRM update failed."); }
     finally { setBusy(false); }
   }
+  async function convertLeadToProject(leadId:string) {
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/admin/conversions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"lead-to-project",leadId})});
+      const result = await response.json();
+      if(!response.ok) throw new Error(result.error || "Could not convert this lead.");
+      await refresh();
+    } catch(e) { setError(e instanceof Error ? e.message : "Lead conversion failed."); }
+    finally { setBusy(false); }
+  }
   const field="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white";
   const button="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
   const select="rounded-lg border border-white/10 bg-slate-950 px-2 py-2 text-xs text-white";
@@ -127,7 +137,7 @@ export function CrmWorkspace() {
     </section>
     <section className="card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Sales pipeline</h2><p className="mt-1 text-xs text-slate-400">Change a lead's stage as the opportunity progresses.</p></div><span className="text-xs text-slate-500">{data.leads.length} leads</span></div>
-      {loading?<p className="mt-4 text-sm text-slate-400">Loading CRM…</p>:data.leads.length===0?<p className="mt-4 text-sm text-slate-400">No leads yet. Create the first one above.</p>:<div className="mt-4 divide-y divide-white/10">{data.leads.map(lead=><div key={lead.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><p className="font-medium">{lead.name}</p><p className="text-xs text-slate-400">{[lead.company,lead.email,lead.source].filter(Boolean).join(" · ")}</p></div><select aria-label={`Stage for ${lead.name}`} className={select} value={lead.stage} disabled={busy} onChange={e=>void update("lead",lead.id,e.target.value)}>{["NEW","CONTACTED","QUALIFIED","PROPOSAL","WON","LOST"].map(v=><option key={v}>{v}</option>)}</select></div>)}</div>}
+      {loading?<p className="mt-4 text-sm text-slate-400">Loading CRM…</p>:data.leads.length===0?<p className="mt-4 text-sm text-slate-400">No leads yet. Create the first one above.</p>:<div className="mt-4 divide-y divide-white/10">{data.leads.map(lead=><div key={lead.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><p className="font-medium">{lead.name}</p><p className="text-xs text-slate-400">{[lead.company,lead.email,lead.source].filter(Boolean).join(" · ")}</p></div><div className="flex items-center gap-2"><button type="button" className="btn-secondary px-3 py-1.5 text-xs" disabled={busy} title="Create a client project from this lead" onClick={()=>void convertLeadToProject(lead.id)}>→ Project</button><select aria-label={`Stage for ${lead.name}`} className={select} value={lead.stage} disabled={busy} onChange={e=>void update("lead",lead.id,e.target.value)}>{["NEW","CONTACTED","QUALIFIED","PROPOSAL","WON","LOST"].map(v=><option key={v}>{v}</option>)}</select></div></div>)}</div>}
     </section>
 
     <div className="grid gap-4 lg:grid-cols-2">

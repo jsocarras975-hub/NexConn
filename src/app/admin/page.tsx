@@ -44,6 +44,8 @@ export default async function Admin() {
         <Link href="/admin/analytics" className="btn-secondary">Analytics ↗</Link>
         <Link href="/admin/crm" className="btn-secondary">CRM ↗</Link>
         <Link href="/admin/customers" className="btn-secondary">Customers ↗</Link>
+        <Link href="/admin/users" className="btn-secondary">Users ↗</Link>
+        <Link href="/admin/audit" className="btn-secondary">Audit log ↗</Link>
         <Link href="/admin/invoices" className="btn-secondary">Invoices ↗</Link>
         <Link href="/admin/finance" className="btn-secondary">Finance ↗</Link>
         <Link href="/admin/settings" className="btn-secondary">Settings ↗</Link>
