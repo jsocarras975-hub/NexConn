@@ -52,6 +52,9 @@ model User {
   passwordHash String
   role         Role      @default(CLIENT)
   disabled     Boolean   @default(false)
+  stripeCustomerId String? @unique
+  subscriptions Subscription[]
+  licenses     License[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   orders       Order[]
@@ -89,6 +92,90 @@ model Product {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   orderItems     OrderItem[]
+  bundleComponents BundleItem[]    @relation("BundleComponents")
+  bundledIn        BundleItem[]    @relation("BundledIn")
+  versions         ProductVersion[]
+  licenses         License[]
+}
+
+// A bundle is a product whose purchase also grants the component products'
+// downloads. The bundle product itself may have no file of its own.
+model BundleItem {
+  id              String  @id @default(cuid())
+  bundleProductId String
+  bundleProduct   Product @relation("BundleComponents", fields: [bundleProductId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product @relation("BundledIn", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleProductId, productId])
+  @@index([productId])
+}
+
+// One row per released version of a product's file. Attaching a file with a
+// version label records a row here and notifies past buyers.
+model ProductVersion {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  version     String
+  changelog   String?  @db.Text
+  downloadKey String
+  createdAt   DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+// A license key issued for one purchased order item.
+model License {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  revoked     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([productId])
+}
+
+// A discount code. The Stripe coupon is created alongside the local row and
+// applied at checkout, so the Stripe total and the local order total agree.
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  percentOff     Int?
+  amountOffCents Int?
+  currency       String    @default("usd")
+  active         Boolean   @default(true)
+  expiresAt      DateTime?
+  maxRedemptions Int?
+  timesRedeemed  Int       @default(0)
+  stripeCouponId String?
+  createdAt      DateTime  @default(now())
+
+  @@index([active, expiresAt])
+}
+
+// A Stripe subscription for a hosting plan, mirrored locally so the portal
+// can show plan and status without calling Stripe on every page load.
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                 String
+  stripeCustomerId     String
+  stripeSubscriptionId String    @unique
+  status               String
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId, status])
 }
 
 model Order {
@@ -100,6 +187,9 @@ model Order {
   user                  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   status                OrderStatus @default(PENDING)
   subtotalCents         Int
+  discountCents         Int         @default(0)
+  couponCode            String?
+  taxCents              Int         @default(0)
   totalCents            Int
   currency              String      @default("usd")
   stripeCheckoutSession String?     @unique
@@ -120,6 +210,7 @@ model OrderItem {
   product         Product @relation(fields: [productId], references: [id])
   quantity        Int
   unitPriceCents  Int
+  licenses        License[]
 
   @@index([orderId])
   @@index([productId])
@@ -249,6 +340,10 @@ model Invoice {
   refundedCents  Int            @default(0)
   dueAt          DateTime?
   paidAt         DateTime?
+  acceptedAt     DateTime?
+  depositOfId    String?       @unique
+  depositOf      Invoice?      @relation("InvoiceDeposit", fields: [depositOfId], references: [id], onDelete: SetNull)
+  deposit        Invoice?      @relation("InvoiceDeposit")
   notes          String?        @db.Text
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt

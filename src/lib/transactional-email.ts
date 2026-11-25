@@ -147,6 +147,86 @@ export async function sendInvoiceReminderEmail(invoiceId: string, daysOverdue: n
   await deliver("invoice reminder", invoice.user.email, `Reminder: invoice ${invoice.invoiceNumber} is ${daysOverdue} days overdue`, html);
 }
 
+// Subscription welcome, sent when a hosting subscription is created.
+export async function sendSubscriptionWelcomeEmail(userId: string, planName: string, priceCents: number, currency: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
+  if (!user?.email) return;
+  const billingUrl = appUrl("/portal/billing");
+  const html = [
+    `<p>Hi ${esc(user.name)},</p>`,
+    `<p>Your <strong>${esc(planName)}</strong> subscription is active — ${money(priceCents, currency)} per month.</p>`,
+    billingUrl ? `<p>Manage your subscription, update your card, or cancel any time from <a href="${billingUrl}">your billing page</a>.</p>` : "",
+    `<p>We will get your hosting set up and follow up by email with the details.</p>`,
+    `<p>— N3xUs Konc3pt'z</p>`,
+  ].join("");
+  await deliver("subscription welcome", user.email, `Your ${planName} subscription is active`, html);
+}
+
+// Receipt for a subscription payment (the first one and each renewal).
+export async function sendSubscriptionReceiptEmail(userId: string, planName: string, amountCents: number, currency: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
+  if (!user?.email) return;
+  const billingUrl = appUrl("/portal/billing");
+  const html = [
+    `<p>Hi ${esc(user.name)},</p>`,
+    `<p>Payment received for <strong>${esc(planName)}</strong> — <strong>${money(amountCents, currency)}</strong>. Thank you.</p>`,
+    billingUrl ? `<p>View your subscription in <a href="${billingUrl}">your account</a>.</p>` : "",
+    `<p>— N3xUs Konc3pt'z</p>`,
+  ].join("");
+  await deliver("subscription receipt", user.email, `Subscription payment received — ${planName}`, html);
+}
+
+// "New version available" notice to everyone who bought a product, sent when
+// the admin attaches a new version of its file.
+export async function sendProductUpdateEmail(productId: string, version: string, changelog: string | null) {
+  const product = await prisma.product.findUnique({ where: { id: productId }, select: { name: true } });
+  if (!product) return;
+  const buyers = await prisma.user.findMany({
+    where: {
+      orders: {
+        some: {
+          status: { in: ["PAID", "FULFILLED"] },
+          items: { some: { productId } },
+        },
+      },
+    },
+    select: { email: true, name: true },
+    distinct: ["id"],
+    take: 500,
+  });
+  const libraryUrl = appUrl("/portal/library");
+  for (const buyer of buyers) {
+    const html = [
+      `<p>Hi ${esc(buyer.name)},</p>`,
+      `<p><strong>${esc(product.name)}</strong> has a new version: <strong>${esc(version)}</strong>.</p>`,
+      changelog ? `<p>${esc(changelog)}</p>` : "",
+      libraryUrl ? `<p><a href="${libraryUrl}">Download the new version</a> — it is already in your library.</p>` : "",
+      `<p>— N3xUs Konc3pt'z</p>`,
+    ].join("");
+    await deliver("product update", buyer.email, `${product.name} — version ${version} is available`, html);
+  }
+}
+
+// Quote accepted notice: confirms acceptance to the client and tells them
+// the deposit invoice has been created.
+export async function sendQuoteAcceptedEmail(quoteInvoiceId: string, depositInvoiceId: string) {
+  const quote = await prisma.invoice.findUnique({
+    where: { id: quoteInvoiceId },
+    include: { user: { select: { email: true, name: true } }, project: { select: { title: true } } },
+  });
+  const deposit = await prisma.invoice.findUnique({ where: { id: depositInvoiceId }, select: { invoiceNumber: true, totalCents: true, currency: true } });
+  if (!quote?.user?.email || !deposit) return;
+  const depositUrl = appUrl(`/portal/invoices/${depositInvoiceId}`);
+  const html = [
+    `<p>Hi ${esc(quote.user.name)},</p>`,
+    `<p>You accepted quote <strong>${esc(quote.invoiceNumber)}</strong>${quote.project ? ` for <strong>${esc(quote.project.title)}</strong>` : ""}. Thank you — we are ready to start.</p>`,
+    `<p>The 50% deposit invoice <strong>${esc(deposit.invoiceNumber)}</strong> (${money(deposit.totalCents, deposit.currency)}) has been created. Once it is sent to you, you can pay it from your account to kick the project off.</p>`,
+    depositUrl ? `<p><a href="${depositUrl}">View the deposit invoice</a></p>` : "",
+    `<p>— N3xUs Konc3pt'z</p>`,
+  ].join("");
+  await deliver("quote accepted", quote.user.email, `Quote accepted — ${quote.invoiceNumber}`, html);
+}
+
 const PROJECT_STATUS_LABEL: Record<string, string> = {
   INQUIRY: "Inquiry",
   QUOTED: "Quoted",

@@ -13,6 +13,10 @@ export function CartPage() {
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
   const [notice,setNotice] = useState("");
+  const [couponInput,setCouponInput] = useState("");
+  const [coupon,setCoupon] = useState<{code:string;discountCents:number}|null>(null);
+  const [couponError,setCouponError] = useState("");
+  const [couponBusy,setCouponBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,15 +61,30 @@ export function CartPage() {
     return ()=>{cancelled = true; window.removeEventListener("nexcon-cart-updated",refresh);window.removeEventListener("storage",refresh);};
   }, []);
 
-  function save(next:CartItem[]) { setItems(next); localStorage.setItem(KEY,JSON.stringify(next)); window.dispatchEvent(new Event("nexcon-cart-updated")); }
+  function save(next:CartItem[]) { setItems(next); setCoupon(null); setCouponError(""); localStorage.setItem(KEY,JSON.stringify(next)); window.dispatchEvent(new Event("nexcon-cart-updated")); }
   const total = useMemo(()=>items.reduce((sum,item)=>sum+item.priceCents*item.quantity,0),[items]);
   const currency = items[0]?.currency || "usd";
   const mixed = items.some(item=>item.currency.toLowerCase()!==currency.toLowerCase());
+  const discount = coupon ? Math.min(coupon.discountCents,total) : 0;
+
+  async function applyCoupon() {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponBusy(true); setCouponError("");
+    try {
+      const response = await fetch("/api/coupons/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, items: items.map(item => ({ productId: item.productId, quantity: item.quantity })) }) });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) { setCouponError("Sign in first — the code will be validated when you check out."); return; }
+      if (!response.ok) throw new Error(data.error || "That coupon could not be applied.");
+      setCoupon({ code: data.code, discountCents: data.discountCents });
+    } catch (err) { setCouponError(err instanceof Error ? err.message : "That coupon could not be applied."); }
+    finally { setCouponBusy(false); }
+  }
 
   async function checkout() {
     setBusy(true);setError("");
     try {
-      const response=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items.map(item=>({productId:item.productId,quantity:item.quantity}))})});
+      const response=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items.map(item=>({productId:item.productId,quantity:item.quantity})),couponCode:coupon?.code||couponInput.trim()||undefined})});
       const data=await response.json();
       if(response.status===401){window.location.assign("/login?next=/cart");return;}
       if(!response.ok)throw new Error(data.error||"Checkout could not be started.");
@@ -83,7 +102,14 @@ export function CartPage() {
       <div className="flex items-center gap-2"><button aria-label={`Decrease ${item.name} quantity`} onClick={()=>save(items.map(x=>x.productId===item.productId?{...x,quantity:Math.max(1,x.quantity-1)}:x))} className="rounded-lg border border-white/10 p-2"><Minus size={14}/></button><span className="w-6 text-center text-sm tabular-nums">{item.quantity}</span><button aria-label={`Increase ${item.name} quantity`} onClick={()=>save(items.map(x=>x.productId===item.productId?{...x,quantity:Math.min(10,x.quantity+1)}:x))} className="rounded-lg border border-white/10 p-2"><Plus size={14}/></button><button aria-label={`Remove ${item.name}`} onClick={()=>save(items.filter(x=>x.productId!==item.productId))} className="ml-2 rounded-lg border border-rose-400/20 p-2 text-rose-300"><Trash2 size={14}/></button></div>
       <p className="w-full text-right text-sm font-semibold">{format(item.priceCents*item.quantity,item.currency)}</p>
     </article>)}</div>
-    <aside className="card h-fit p-6"><h2 className="text-lg font-semibold">Order summary</h2><div className="mt-5 flex justify-between text-sm text-slate-400"><span>Subtotal</span><span>{format(total,currency)}</span></div><div className="mt-3 flex justify-between text-sm text-slate-400"><span>Tax</span><span>Calculated at checkout</span></div><div className="my-5 border-t border-white/10"/><div className="flex justify-between font-semibold"><span>Total before tax</span><span>{format(total,currency)}</span></div>
+    <aside className="card h-fit p-6"><h2 className="text-lg font-semibold">Order summary</h2><div className="mt-5 flex justify-between text-sm text-slate-400"><span>Subtotal</span><span>{format(total,currency)}</span></div>
+      {coupon&&<div className="mt-3 flex justify-between text-sm text-emerald-300"><span>Coupon {coupon.code}</span><span>−{format(discount,currency)}</span></div>}
+      <div className="mt-4">
+        {coupon ? <div className="flex items-center justify-between gap-2 text-sm"><span className="text-slate-300">Coupon <span className="font-mono font-semibold">{coupon.code}</span> applied</span><button type="button" className="text-xs text-slate-400 underline" onClick={()=>{setCoupon(null);setCouponInput("");}}>Remove</button></div>
+        : <div className="flex gap-2"><input value={couponInput} onChange={(e)=>setCouponInput(e.target.value)} placeholder="Coupon code" aria-label="Coupon code" className="input min-w-0 flex-1" /><button type="button" disabled={couponBusy||!couponInput.trim()} onClick={applyCoupon} className="btn-secondary shrink-0 disabled:opacity-50">{couponBusy?"Checking…":"Apply"}</button></div>}
+        {couponError&&<p role="alert" className="mt-2 text-xs text-rose-300">{couponError}</p>}
+      </div>
+      <div className="mt-3 flex justify-between text-sm text-slate-400"><span>Tax</span><span>Calculated at checkout</span></div><div className="my-5 border-t border-white/10"/><div className="flex justify-between font-semibold"><span>Total before tax</span><span>{format(total-discount,currency)}</span></div>
       {mixed?<p className="mt-4 text-xs text-amber-300">Separate carts are needed for products in different currencies.</p>:<button disabled={busy} onClick={checkout} className="btn-primary mt-6 w-full disabled:opacity-50">{busy?"Preparing checkout…":"Continue to secure checkout"}</button>}
       {error&&<p role="alert" className="mt-3 text-xs text-rose-300">{error}</p>}
       {notice&&<p role="status" className="mt-3 text-xs text-amber-300">{notice}</p>}

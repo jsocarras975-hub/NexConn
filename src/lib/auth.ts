@@ -58,7 +58,7 @@ export async function getCurrentUser() {
     if (!payload.sub || typeof payload.ver !== "number") return null;
     return await prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, name: true, email: true, role: true, disabled: true, tokenVersion: true },
+      select: { id: true, name: true, email: true, role: true, disabled: true, tokenVersion: true, stripeCustomerId: true },
     }).then((user) =>
       user && !user.disabled && user.tokenVersion === payload.ver ? user : null
     );

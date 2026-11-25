@@ -18,6 +18,12 @@ export function ProductManager() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [bundleSel, setBundleSel] = useState<string[]>([]);
+  const [bundleBusy, setBundleBusy] = useState(false);
+  const [versionHistory, setVersionHistory] = useState<{ id: string; version: string; changelog: string | null; createdAt: string }[]>([]);
+  const [versionLabel, setVersionLabel] = useState("");
+  const [changelog, setChangelog] = useState("");
 
   async function load() {
     const response = await fetch("/api/admin/products", { cache: "no-store" });
@@ -60,7 +66,7 @@ export function ProductManager() {
     finally { setBusy(false); }
   }
 
-  async function uploadFile(product: Product, file?: File) {
+  async function uploadFile(product: Product, file?: File, release?: { version: string; changelog: string }) {
     if (!file) return;
     setUploading(product.id); setError(""); setNotice("");
     try {
@@ -82,15 +88,49 @@ export function ProductManager() {
 
       const attachResponse = await fetch(`/api/admin/products/${product.id}/attach-file`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ objectKey: signed.objectKey }),
+        body: JSON.stringify({
+          objectKey: signed.objectKey,
+          ...(release?.version ? { version: release.version, changelog: release.changelog || undefined } : {}),
+        }),
       });
       const attached = await attachResponse.json();
       if (!attachResponse.ok) throw new Error(attached.error || "Could not attach uploaded file.");
 
-      setNotice(`Private file attached to ${product.name}.`);
+      setNotice(release?.version ? `Version ${release.version} of ${product.name} released — buyers have been emailed.` : `Private file attached to ${product.name}.`);
+      if (release?.version) { setVersionLabel(""); setChangelog(""); void openExtras(product, true); }
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Upload failed."); }
     finally { setUploading(null); }
+  }
+
+  async function openExtras(product: Product, keepOpen = false) {
+    if (expanded === product.id && !keepOpen) { setExpanded(null); return; }
+    setExpanded(product.id);
+    setError("");
+    try {
+      const [bundleResponse, versionsResponse] = await Promise.all([
+        fetch(`/api/admin/products/${product.id}/bundle`, { cache: "no-store" }),
+        fetch(`/api/admin/products/${product.id}/versions`, { cache: "no-store" }),
+      ]);
+      const bundleData = await bundleResponse.json();
+      const versionsData = await versionsResponse.json();
+      if (bundleResponse.ok) setBundleSel(bundleData.componentIds ?? []);
+      if (versionsResponse.ok) setVersionHistory(versionsData.versions ?? []);
+    } catch { setError("Could not load bundle and version details."); }
+  }
+
+  async function saveBundle(product: Product) {
+    setBundleBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch(`/api/admin/products/${product.id}/bundle`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: bundleSel }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not save the bundle.");
+      setNotice(bundleSel.length ? `${product.name} is now a bundle of ${bundleSel.length} product${bundleSel.length === 1 ? "" : "s"}.` : `${product.name} is no longer a bundle.`);
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not save the bundle."); }
+    finally { setBundleBusy(false); }
   }
 
   return (
@@ -136,11 +176,57 @@ export function ProductManager() {
               <button type="button" onClick={() => edit(product)} className="btn-secondary" disabled={busy || !!uploading}>Edit</button>
               <button type="button" onClick={() => void toggle(product, "featured")} className="btn-secondary" disabled={busy || !!uploading}>{product.featured ? "Unfeature" : "Feature"}</button>
               <button type="button" onClick={() => void toggle(product, "active")} className="btn-secondary" disabled={busy || !!uploading}>{product.active ? "Unpublish" : "Publish"}</button>
+              <button type="button" onClick={() => void openExtras(product)} className="btn-secondary" disabled={busy || !!uploading}>{expanded === product.id ? "Close extras" : "Bundle & versions"}</button>
               <label className="btn-secondary cursor-pointer">
                 {uploading === product.id ? "Uploading…" : "Attach file"}
                 <input className="sr-only" type="file" accept=".pdf,.zip,.docx,.xlsx,.bin" disabled={busy || !!uploading} onChange={(event) => { void uploadFile(product, event.target.files?.[0]); event.currentTarget.value = ""; }}/>
               </label>
             </div>
+            {expanded === product.id && (
+              <div className="w-full space-y-6 border-t border-white/10 pt-5">
+                <div>
+                  <h3 className="text-sm font-semibold">Bundle contents</h3>
+                  <p className="mt-1 text-xs text-slate-500">Buying this product also grants downloads of the checked products. Leave all unchecked for a standalone product.</p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {items.filter((other) => other.id !== product.id).map((other) => (
+                      <label key={other.id} className="flex items-center gap-2 text-sm text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={bundleSel.includes(other.id)}
+                          onChange={(event) => setBundleSel((current) => event.target.checked ? [...current, other.id] : current.filter((x) => x !== other.id))}
+                        />
+                        {other.name}
+                      </label>
+                    ))}
+                    {items.length < 2 && <p className="text-sm text-slate-500">Create another product first.</p>}
+                  </div>
+                  <button type="button" className="btn-secondary mt-3" disabled={bundleBusy} onClick={() => void saveBundle(product)}>{bundleBusy ? "Saving…" : "Save bundle"}</button>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Release a new version</h3>
+                  <p className="mt-1 text-xs text-slate-500">Uploads a new file as a named version and emails everyone who bought this product.</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className="block text-sm">Version label
+                      <input className="input mt-1 w-full" value={versionLabel} onChange={(event) => setVersionLabel(event.target.value)} placeholder="1.1.0" />
+                    </label>
+                    <label className="block text-sm">Changelog (optional)
+                      <input className="input mt-1 w-full" value={changelog} onChange={(event) => setChangelog(event.target.value)} placeholder="What changed in this version" />
+                    </label>
+                  </div>
+                  <label className={`btn-secondary mt-3 inline-flex cursor-pointer ${!versionLabel.trim() ? "pointer-events-none opacity-50" : ""}`}>
+                    {uploading === product.id ? "Uploading…" : "Upload version file"}
+                    <input className="sr-only" type="file" accept=".pdf,.zip,.docx,.xlsx,.bin" disabled={busy || !!uploading || !versionLabel.trim()} onChange={(event) => { void uploadFile(product, event.target.files?.[0], { version: versionLabel.trim(), changelog: changelog.trim() }); event.currentTarget.value = ""; }}/>
+                  </label>
+                  {versionHistory.length > 0 && (
+                    <ul className="mt-4 space-y-1 text-xs text-slate-400">
+                      {versionHistory.map((v) => (
+                        <li key={v.id}><span className="font-mono text-slate-200">{v.version}</span> · {new Date(v.createdAt).toLocaleDateString()}{v.changelog ? ` — ${v.changelog}` : ""}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
           </article>
         ))}
         {!items.length && <div className="card p-8 text-sm text-slate-500">No products yet.</div>}

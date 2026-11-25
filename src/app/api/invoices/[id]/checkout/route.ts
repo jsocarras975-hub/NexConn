@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { automaticTaxParams } from "@/lib/tax";
 export const runtime = "nodejs";
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -42,6 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const idempotencyKey = `n3xus-invoice-${invoice.id}-${invoice.stripeCheckoutSession ?? "none"}-${invoice.totalCents}`;
     const session = await stripe.checkout.sessions.create({
       mode: "payment", customer_email: invoice.user?.email ?? user.email, client_reference_id: invoice.id,
+      ...automaticTaxParams(),
       metadata: { invoiceId: invoice.id, userId: user.id, invoiceNumber: invoice.invoiceNumber },
       payment_intent_data: { metadata: { invoiceId: invoice.id, userId: user.id } },
       line_items: [{ quantity: 1, price_data: { currency: invoice.currency.toLowerCase(), unit_amount: invoice.totalCents, product_data: { name: `N3xUs Konc3pt'z invoice ${invoice.invoiceNumber}` } } }],

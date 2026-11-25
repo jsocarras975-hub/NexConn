@@ -1,12 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inspectPrivateObject } from "@/lib/storage";
+import { sendProductUpdateEmail } from "@/lib/transactional-email";
 
 export const runtime = "nodejs";
 
-const schema = z.object({ objectKey: z.string().min(1).max(500) });
+const schema = z.object({
+  objectKey: z.string().min(1).max(500),
+  // Optional release info: when a version label is given, the attach is
+  // recorded as a product version and past buyers are emailed about it.
+  version: z.string().trim().min(1).max(40).optional(),
+  changelog: z.string().trim().max(5000).optional(),
+});
 const MAX_BYTES = 100 * 1024 * 1024;
 const allowedTypes = new Set([
   "application/pdf",
@@ -45,14 +52,43 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       data: { downloadKey: parsed.data.objectKey },
       select: { id: true, name: true },
     });
-    await prisma.auditLog.create({
-      data: {
-        actorId: user.id,
-        action: "PRODUCT_PRIVATE_FILE_ATTACHED",
-        target: id,
-        metadata: { contentLength: object.contentLength, contentType: object.contentType },
-      },
-    });
+
+    if (parsed.data.version) {
+      await prisma.productVersion.create({
+        data: {
+          productId: id,
+          version: parsed.data.version,
+          changelog: parsed.data.changelog ?? null,
+          downloadKey: parsed.data.objectKey,
+        },
+      });
+      await prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: "PRODUCT_VERSION_RELEASED",
+          target: id,
+          metadata: { version: parsed.data.version, contentLength: object.contentLength, contentType: object.contentType },
+        },
+      });
+      const version = parsed.data.version;
+      const changelog = parsed.data.changelog ?? null;
+      after(async () => {
+        try {
+          await sendProductUpdateEmail(id, version, changelog);
+        } catch (error) {
+          console.error("Product update email failed", error);
+        }
+      });
+    } else {
+      await prisma.auditLog.create({
+        data: {
+          actorId: user.id,
+          action: "PRODUCT_PRIVATE_FILE_ATTACHED",
+          target: id,
+          metadata: { contentLength: object.contentLength, contentType: object.contentType },
+        },
+      });
+    }
 
     return NextResponse.json({ success: true, product, file: { contentLength: object.contentLength, contentType: object.contentType } });
   } catch (error) {

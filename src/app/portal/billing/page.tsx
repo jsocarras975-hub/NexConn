@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/format";
+import { getPlan } from "@/lib/plans";
+import { ManageBillingButton } from "@/components/manage-billing-button";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +13,7 @@ export default async function PortalBillingPage() {
   if (!user) redirect("/login");
   if (user.role === "OWNER" || user.role === "ADMIN") redirect("/admin");
 
-  const [invoices, orders] = await Promise.all([
+  const [invoices, orders, subscriptions] = await Promise.all([
     prisma.invoice.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -30,6 +32,11 @@ export default async function PortalBillingPage() {
         currency: true, createdAt: true,
       },
     }),
+    prisma.subscription.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
   ]);
 
   return (
@@ -44,6 +51,38 @@ export default async function PortalBillingPage() {
       </div>
 
       <section className="mt-8 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">Subscriptions</h2>
+          {subscriptions.length > 0 && <ManageBillingButton />}
+        </div>
+        <div className="card divide-y divide-white/10 p-5 sm:p-7">
+          {subscriptions.length ? subscriptions.map((sub) => {
+            const plan = getPlan(sub.plan);
+            return (
+              <article key={sub.id} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
+                <div>
+                  <p className="font-medium">{plan?.name ?? sub.plan}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {sub.status === "canceled"
+                      ? "Canceled"
+                      : sub.cancelAtPeriodEnd
+                        ? `Cancels ${sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toLocaleDateString() : "at period end"}`
+                        : sub.currentPeriodEnd
+                          ? `Renews ${new Date(sub.currentPeriodEnd).toLocaleDateString()}`
+                          : "Active"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  {plan && <p className="font-semibold">{money(plan.priceCents, plan.currency)}/mo</p>}
+                  <p className="mt-1 text-xs text-slate-400">{sub.status}</p>
+                </div>
+              </article>
+            );
+          }) : <p className="py-6 text-sm text-slate-500">No subscriptions yet. Hosting plans are on the <Link href="/services" className="text-cyan-300">services page</Link>.</p>}
+        </div>
+      </section>
+
+      <section className="mt-10 space-y-4">
         <h2 className="text-xl font-semibold">Invoices</h2>
         <div className="card divide-y divide-white/10 p-5 sm:p-7">
           {invoices.length ? invoices.map((invoice) => (

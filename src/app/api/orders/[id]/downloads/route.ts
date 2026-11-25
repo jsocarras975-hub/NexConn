@@ -13,27 +13,55 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const order = await prisma.order.findFirst({
     where: { id, userId: user.id, status: { in: ["PAID", "FULFILLED"] } },
-    include: { items: { include: { product: { select: { id: true, name: true, downloadKey: true } } } } },
+    include: {
+      items: {
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              downloadKey: true,
+              bundleComponents: { select: { product: { select: { id: true, name: true, downloadKey: true } } } },
+            },
+          },
+        },
+      },
+    },
   });
   if (!order) return NextResponse.json({ error: "Paid order not found." }, { status: 404 });
 
   try {
-    const downloadable = order.items.filter((item) => item.product.downloadKey);
+    // Expand each purchased item into the files it grants: its own file
+    // plus, for bundles, every component's file (one level deep). Deduped
+    // by product, so buying a bundle and one of its components separately
+    // still yields one link per product.
+    const byProduct = new Map<string, { productId: string; productName: string; downloadKey: string }>();
+    for (const item of order.items) {
+      if (item.product.downloadKey) {
+        byProduct.set(item.product.id, { productId: item.product.id, productName: item.product.name, downloadKey: item.product.downloadKey });
+      }
+      for (const component of item.product.bundleComponents) {
+        if (component.product.downloadKey && !byProduct.has(component.product.id)) {
+          byProduct.set(component.product.id, { productId: component.product.id, productName: component.product.name, downloadKey: component.product.downloadKey });
+        }
+      }
+    }
+    const downloadable = [...byProduct.values()];
     if (!downloadable.length) {
       return NextResponse.json({ error: "No downloadable files are attached to this order." }, { status: 404 });
     }
 
-    const downloads = await Promise.all(downloadable.map(async (item) => ({
-      productId: item.product.id,
-      productName: item.product.name,
-      url: await createPrivateDownloadUrl(item.product.downloadKey!),
+    const downloads = await Promise.all(downloadable.map(async (entry) => ({
+      productId: entry.productId,
+      productName: entry.productName,
+      url: await createPrivateDownloadUrl(entry.downloadKey),
     })));
 
     await prisma.auditLog.createMany({
-      data: downloadable.map((item) => ({
+      data: downloadable.map((entry) => ({
         actorId: user.id,
         action: "PRODUCT_DOWNLOAD_LINK_ISSUED",
-        target: item.product.id,
+        target: entry.productId,
         metadata: { orderId: order.id, expiresInSeconds: 300 },
       })),
     });

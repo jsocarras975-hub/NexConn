@@ -2,10 +2,20 @@ import { NextResponse, after } from "next/server";
 import Stripe from "stripe";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { sendInvoicePaidEmail, sendOrderReceiptEmail, sendRefundEmail } from "@/lib/transactional-email";
+import { sendInvoicePaidEmail, sendOrderReceiptEmail, sendRefundEmail, sendSubscriptionReceiptEmail, sendSubscriptionWelcomeEmail } from "@/lib/transactional-email";
+import { generateLicenseKey } from "@/lib/licenses";
+import { getPlan } from "@/lib/plans";
 export const runtime = "nodejs";
 
 type Tx = Prisma.TransactionClient;
+
+// Stripe moved current_period_end onto subscription items in newer API
+// versions; read whichever shape the SDK returns.
+function periodEndOf(sub: Stripe.Subscription): Date | null {
+  const raw = (sub as unknown as { current_period_end?: number }).current_period_end
+    ?? sub.items?.data?.[0]?.current_period_end;
+  return typeof raw === "number" ? new Date(raw * 1000) : null;
+}
 
 async function settleInvoice(tx: Tx, session: Stripe.Checkout.Session): Promise<string | null> {
   const id = session.metadata?.invoiceId;
@@ -40,14 +50,15 @@ async function settleInvoice(tx: Tx, session: Stripe.Checkout.Session): Promise<
     await tx.auditLog.create({ data: { action: "INVOICE_SESSION_MISMATCH", target: id, metadata: { checkoutSessionId: session.id, expectedSessionId: inv.stripeCheckoutSession, amountTotal: session.amount_total, currency: session.currency } } });
     return null;
   }
-  if (session.amount_total !== inv.totalCents || (session.currency || "").toLowerCase() !== inv.currency.toLowerCase()) {
+  if (session.amount_total !== inv.totalCents + (session.total_details?.amount_tax ?? 0) || (session.currency || "").toLowerCase() !== inv.currency.toLowerCase()) {
     await tx.auditLog.create({ data: { action: "INVOICE_AMOUNT_MISMATCH", target: id, metadata: { checkoutSessionId: session.id, paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null, amountTotal: session.amount_total, currency: session.currency, expectedTotalCents: inv.totalCents, expectedCurrency: inv.currency } } });
     return null;
   }
   const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;
+  const amountTax = session.total_details?.amount_tax ?? 0;
   const changed = await tx.invoice.updateMany({
-    where: { id, status: { in: ["SENT", "OVERDUE"] }, stripeCheckoutSession: session.id, totalCents: session.amount_total, currency: inv.currency },
-    data: { status: "PAID", paidAt: new Date(), stripePaymentIntent: pi },
+    where: { id, status: { in: ["SENT", "OVERDUE"] }, stripeCheckoutSession: session.id, totalCents: inv.totalCents, currency: inv.currency },
+    data: { status: "PAID", paidAt: new Date(), stripePaymentIntent: pi, ...(amountTax > 0 ? { taxCents: amountTax } : {}) },
   });
   if (changed.count) await tx.auditLog.create({ data: { action: "INVOICE_PAID_BY_STRIPE", target: id, metadata: { checkoutSessionId: session.id, paymentIntentId: pi, amountTotal: session.amount_total, currency: session.currency } } });
   return changed.count ? id : null;
@@ -66,17 +77,19 @@ async function settleOrder(tx: Tx, session: Stripe.Checkout.Session): Promise<st
     await tx.auditLog.create({ data: { action: "ORDER_SESSION_MISMATCH", target: orderId, metadata: { checkoutSessionId: session.id, expectedSessionId: order.stripeCheckoutSession, amountTotal: session.amount_total, currency: session.currency } } });
     return null;
   }
-  if (session.amount_total !== order.totalCents || (session.currency || "").toLowerCase() !== order.currency.toLowerCase()) {
+  if (session.amount_total !== order.totalCents + (session.total_details?.amount_tax ?? 0) || (session.currency || "").toLowerCase() !== order.currency.toLowerCase()) {
     await tx.auditLog.create({ data: { action: "ORDER_AMOUNT_MISMATCH", target: orderId, metadata: { checkoutSessionId: session.id, paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null, amountTotal: session.amount_total, currency: session.currency, expectedTotalCents: order.totalCents, expectedCurrency: order.currency } } });
     return null;
   }
   const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;
+  const amountTax = session.total_details?.amount_tax ?? 0;
   const changed = await tx.order.updateMany({
-    where: { id: orderId, stripeCheckoutSession: session.id, status: "PENDING", totalCents: session.amount_total, currency: order.currency },
+    where: { id: orderId, stripeCheckoutSession: session.id, status: "PENDING", totalCents: order.totalCents, currency: order.currency },
     data: {
       status: "PAID",
       paidAt: new Date(),
       stripePaymentIntent: pi,
+      ...(amountTax > 0 ? { taxCents: amountTax } : {}),
     },
   });
   if (changed.count) {
@@ -87,6 +100,31 @@ async function settleOrder(tx: Tx, session: Stripe.Checkout.Session): Promise<st
         metadata: { checkoutSessionId: session.id, paymentIntentId: pi, amountTotal: session.amount_total, currency: session.currency },
       },
     });
+    // Issue license keys (one per purchased unit) and count the coupon
+    // redemption, atomically with the payment itself: a rolled-back event
+    // issues nothing, and a duplicate delivery short-circuits above because
+    // the order is no longer PENDING.
+    const fullOrder = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { userId: true, couponCode: true, items: { select: { id: true, productId: true, quantity: true } } },
+    });
+    if (fullOrder?.userId) {
+      const licenseRows = fullOrder.items.flatMap((item) =>
+        Array.from({ length: Math.min(item.quantity, 10) }, () => ({
+          key: generateLicenseKey(),
+          userId: fullOrder.userId!,
+          productId: item.productId,
+          orderItemId: item.id,
+        })),
+      );
+      if (licenseRows.length) await tx.license.createMany({ data: licenseRows, skipDuplicates: true });
+    }
+    if (fullOrder?.couponCode) {
+      await tx.coupon.updateMany({
+        where: { code: fullOrder.couponCode },
+        data: { timesRedeemed: { increment: 1 } },
+      });
+    }
   }
   return changed.count ? orderId : null;
 }
@@ -102,6 +140,13 @@ export async function POST(req: Request) {
   // Stripe calls that must happen before the database transaction, so the
   // transaction itself only does database work and stays short.
   const refunds: Stripe.Refund[] = [];
+  let subscriptionSnapshot: Stripe.Subscription | null = null;
+  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.mode === "subscription" && typeof session.subscription === "string") {
+      subscriptionSnapshot = await stripe.subscriptions.retrieve(session.subscription).catch(() => null);
+    }
+  }
   if (event.type === "charge.refunded") {
     const charge = event.data.object as Stripe.Charge;
     const paymentIntentId = typeof charge.payment_intent === "string" ? charge.payment_intent : null;
@@ -129,6 +174,8 @@ export async function POST(req: Request) {
   let settledOrderId: string | null = null;
   let settledInvoiceId: string | null = null;
   let refundNotice: { orderId?: string; invoiceId?: string; refundedCents: number; totalCents: number; currency: string } | null = null;
+  let subscriptionWelcome: { userId: string; plan: string } | null = null;
+  let subscriptionReceipt: { userId: string; plan: string; amountCents: number; currency: string } | null = null;
 
   try {
     // One transaction covers the event-ledger claim, the order/invoice
@@ -145,6 +192,99 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.metadata?.invoiceId) settledInvoiceId = await settleInvoice(tx, session);
         else settledOrderId = await settleOrder(tx, session);
+      }
+      // A completed subscription checkout mirrors the subscription locally
+      // so the portal can show it without calling Stripe per page load.
+      if ((event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") && subscriptionSnapshot) {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const planSlug = session.metadata?.plan;
+        if (userId && planSlug) {
+          await tx.subscription.upsert({
+            where: { stripeSubscriptionId: subscriptionSnapshot.id },
+            create: {
+              userId,
+              plan: planSlug,
+              stripeCustomerId: String(session.customer ?? subscriptionSnapshot.customer),
+              stripeSubscriptionId: subscriptionSnapshot.id,
+              status: subscriptionSnapshot.status,
+              currentPeriodEnd: periodEndOf(subscriptionSnapshot),
+              cancelAtPeriodEnd: subscriptionSnapshot.cancel_at_period_end,
+            },
+            update: {
+              status: subscriptionSnapshot.status,
+              currentPeriodEnd: periodEndOf(subscriptionSnapshot),
+              cancelAtPeriodEnd: subscriptionSnapshot.cancel_at_period_end,
+            },
+          });
+          await tx.auditLog.create({
+            data: { action: "SUBSCRIPTION_CREATED", target: subscriptionSnapshot.id, metadata: { userId, plan: planSlug } },
+          });
+          subscriptionWelcome = { userId, plan: planSlug };
+        }
+      }
+      // Subscription lifecycle: keep the local mirror in step with Stripe.
+      if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+        const sub = event.data.object as Stripe.Subscription;
+        const status = event.type === "customer.subscription.deleted" ? "canceled" : sub.status;
+        const meta = (sub.metadata ?? {}) as { userId?: string; plan?: string };
+        const existing = await tx.subscription.findUnique({ where: { stripeSubscriptionId: sub.id }, select: { id: true } });
+        if (existing) {
+          await tx.subscription.update({
+            where: { stripeSubscriptionId: sub.id },
+            data: { status, currentPeriodEnd: periodEndOf(sub), cancelAtPeriodEnd: sub.cancel_at_period_end },
+          });
+        } else if (meta.userId && meta.plan) {
+          await tx.subscription.create({
+            data: {
+              userId: meta.userId,
+              plan: meta.plan,
+              stripeCustomerId: String(sub.customer),
+              stripeSubscriptionId: sub.id,
+              status,
+              currentPeriodEnd: periodEndOf(sub),
+              cancelAtPeriodEnd: sub.cancel_at_period_end,
+            },
+          });
+        }
+        await tx.auditLog.create({
+          data: {
+            action: event.type === "customer.subscription.deleted" ? "SUBSCRIPTION_CANCELED" : "SUBSCRIPTION_UPDATED",
+            target: sub.id,
+            metadata: { status },
+          },
+        });
+      }
+      // A paid subscription invoice (first payment or a renewal) gets a
+      // receipt email after commit. One-off invoice payments are settled by
+      // checkout.session.completed instead and never reach this branch with
+      // a subscription attached.
+      if (event.type === "invoice.paid") {
+        const stripeInvoice = event.data.object as Stripe.Invoice;
+        const subId = (stripeInvoice as unknown as { subscription?: string | null }).subscription
+          ?? (stripeInvoice as unknown as { parent?: { subscription_details?: { subscription?: string | null } } }).parent?.subscription_details?.subscription
+          ?? null;
+        if (subId) {
+          const local = await tx.subscription.findUnique({
+            where: { stripeSubscriptionId: subId },
+            select: { userId: true, plan: true },
+          });
+          if (local) {
+            await tx.auditLog.create({
+              data: {
+                action: "SUBSCRIPTION_PAYMENT",
+                target: subId,
+                metadata: { invoiceId: stripeInvoice.id, amountPaid: stripeInvoice.amount_paid, currency: stripeInvoice.currency },
+              },
+            });
+            subscriptionReceipt = {
+              userId: local.userId,
+              plan: local.plan,
+              amountCents: stripeInvoice.amount_paid,
+              currency: stripeInvoice.currency,
+            };
+          }
+        }
       }
       if (event.type === "charge.refunded") {
         const charge = event.data.object as Stripe.Charge;
@@ -261,15 +401,28 @@ export async function POST(req: Request) {
     // Receipts and refund notices go out only after the transaction commits,
     // so a rolled-back event never emails about money that was not recorded.
     // Sent via after() so Stripe still gets its 200 immediately.
-    if (settledOrderId || settledInvoiceId || refundNotice) {
+    if (settledOrderId || settledInvoiceId || refundNotice || subscriptionWelcome || subscriptionReceipt) {
       const orderId = settledOrderId;
       const invoiceId = settledInvoiceId;
       const notice = refundNotice;
+      // Assertions pin the declared types: TS's flow analysis collapses
+      // these two to null because they are only assigned inside nested
+      // blocks of the transaction callback.
+      const welcome = subscriptionWelcome as { userId: string; plan: string } | null;
+      const receipt = subscriptionReceipt as { userId: string; plan: string; amountCents: number; currency: string } | null;
       after(async () => {
         try {
           if (orderId) await sendOrderReceiptEmail(orderId);
           if (invoiceId) await sendInvoicePaidEmail(invoiceId);
           if (notice) await sendRefundEmail(notice);
+          if (welcome) {
+            const plan = getPlan(welcome.plan);
+            if (plan) await sendSubscriptionWelcomeEmail(welcome.userId, plan.name, plan.priceCents, plan.currency);
+          }
+          if (receipt) {
+            const plan = getPlan(receipt.plan);
+            await sendSubscriptionReceiptEmail(receipt.userId, plan?.name ?? receipt.plan, receipt.amountCents, receipt.currency);
+          }
         } catch (error) {
           console.error("Post-webhook transactional email failed", error);
         }

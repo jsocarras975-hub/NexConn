@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { sameCartItems } from "@/lib/cart";
+import { evaluateCoupon, normalizeCouponCode } from "@/lib/coupons";
+import { automaticTaxParams } from "@/lib/tax";
 
 const schema = z.object({
   items: z.array(
@@ -13,6 +15,7 @@ const schema = z.object({
       quantity: z.number().int().min(1).max(10),
     }),
   ).min(1).max(20),
+  couponCode: z.string().trim().max(40).optional(),
 });
 
 export async function POST(req: Request) {
@@ -48,13 +51,21 @@ export async function POST(req: Request) {
     }
 
     const ids = [...quantities.keys()];
-    const products = await prisma.product.findMany({ where: { id: { in: ids }, active: true } });
+    const products = await prisma.product.findMany({
+      where: { id: { in: ids }, active: true },
+      include: {
+        bundleComponents: { select: { product: { select: { downloadKey: true } } } },
+      },
+    });
     if (products.length !== ids.length) {
       return NextResponse.json({ error: "One or more products are unavailable." }, { status: 400 });
     }
-    // Never sell a product with no file attached: the store promises instant
-    // download, so a file-less product must not reach Stripe.
-    if (products.some((product) => !product.downloadKey)) {
+    // Never sell a product with nothing to download: the store promises
+    // instant download, so a file-less product must not reach Stripe. A
+    // bundle passes when at least one of its components has a file.
+    const hasDownload = (product: (typeof products)[number]) =>
+      Boolean(product.downloadKey) || product.bundleComponents.some((c) => Boolean(c.product.downloadKey));
+    if (products.some((product) => !hasDownload(product))) {
       return NextResponse.json({ error: "One or more products are not ready for download yet." }, { status: 400 });
     }
 
@@ -71,6 +82,25 @@ export async function POST(req: Request) {
     const subtotalCents = items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
     const appUrl = process.env.APP_URL.replace(/\/+$/, "");
 
+    // Coupon: validated against the server-computed subtotal. The discount
+    // is applied in Stripe too (via the coupon's Stripe twin), so the
+    // session total and the order total stay identical.
+    let discountCents = 0;
+    let couponCode: string | null = null;
+    let stripeCouponId: string | null = null;
+    if (parsed.data.couponCode) {
+      const evaluation = await evaluateCoupon(
+        parsed.data.couponCode,
+        items.map((item) => item.unitPriceCents * item.quantity),
+        currency,
+      );
+      if (!evaluation.ok) return NextResponse.json({ error: evaluation.error }, { status: 400 });
+      discountCents = evaluation.discountCents;
+      couponCode = normalizeCouponCode(parsed.data.couponCode);
+      stripeCouponId = evaluation.coupon.stripeCouponId;
+    }
+    const totalCents = subtotalCents - discountCents;
+
     // A double-click (or a retry) must not create a second order for the
     // same cart: reuse a recent PENDING order for this user with identical
     // items and total, and send the buyer to its checkout session.
@@ -79,7 +109,8 @@ export async function POST(req: Request) {
         userId: user.id,
         status: "PENDING",
         currency,
-        totalCents: subtotalCents,
+        totalCents,
+        couponCode,
         createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
       },
       orderBy: { createdAt: "desc" },
@@ -95,7 +126,9 @@ export async function POST(req: Request) {
         data: {
           userId: user.id,
           subtotalCents,
-          totalCents: subtotalCents,
+          discountCents,
+          couponCode,
+          totalCents,
           currency,
           items: { create: items },
         },
@@ -112,6 +145,8 @@ export async function POST(req: Request) {
         customer_email: user.email,
         client_reference_id: orderId,
         metadata: { orderId, userId: user.id },
+        ...automaticTaxParams(),
+        ...(stripeCouponId && discountCents > 0 ? { discounts: [{ coupon: stripeCouponId }] } : {}),
         line_items: items.map((item) => {
           const product = productById.get(item.productId)!;
           return {
@@ -143,9 +178,21 @@ export async function POST(req: Request) {
       throw error;
     }
 
+    // When a coupon is applied, Stripe is the source of truth for the
+    // charged total (its per-line rounding can differ by a cent from any
+    // local estimate): sync the order to the session's pre-tax total so
+    // the webhook settlement check compares identical numbers.
     await prisma.order.update({
       where: { id: orderId },
-      data: { stripeCheckoutSession: session.id },
+      data: {
+        stripeCheckoutSession: session.id,
+        ...(couponCode && typeof session.amount_total === "number"
+          ? {
+              totalCents: session.amount_total - (session.total_details?.amount_tax ?? 0),
+              discountCents: Math.max(0, subtotalCents - (session.amount_total - (session.total_details?.amount_tax ?? 0))),
+            }
+          : {}),
+      },
     });
 
     return NextResponse.json({ url: session.url });

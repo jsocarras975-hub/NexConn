@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/format";
 import { InvoicePayButton } from "@/components/invoice-pay-button";
+import { AcceptQuoteButton } from "@/components/accept-quote-button";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,11 @@ export default async function InvoiceDetail({ params, searchParams }: { params: 
   const query = await searchParams;
   const invoice = await prisma.invoice.findFirst({
     where: { id, ...(["OWNER", "ADMIN"].includes(user.role) ? {} : { userId: user.id }) },
-    include: { user: { select: { name: true, email: true } }, items: true, project: { select: { title: true } } },
+    include: { user: { select: { name: true, email: true } }, items: true, project: { select: { title: true } }, deposit: { select: { id: true, invoiceNumber: true } } },
   });
   if (!invoice) notFound();
+  const isQuote = invoice.status === "DRAFT" && Boolean(invoice.projectId);
+  const isClientViewer = invoice.userId === user.id;
 
   return (
     <main className="container section">
@@ -26,9 +29,11 @@ export default async function InvoiceDetail({ params, searchParams }: { params: 
       </div>
       {query.payment === "success" && invoice.status !== "PAID" && <p className="no-print mb-4 text-sm text-amber-300">Payment submitted. Invoice status updates after Stripe confirms payment.</p>}
       {query.payment === "cancelled" && <p className="no-print mb-4 text-sm text-slate-400">Checkout was cancelled. No payment was recorded.</p>}
+      {isQuote && isClientViewer && !invoice.acceptedAt && <div className="mx-auto mb-4 max-w-3xl"><AcceptQuoteButton invoiceId={invoice.id} /></div>}
+      {invoice.acceptedAt && <p className="no-print mx-auto mb-4 max-w-3xl rounded-xl border border-emerald-300/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">Quote accepted {new Date(invoice.acceptedAt).toLocaleDateString()}.{invoice.deposit ? <> Deposit invoice: <Link href={`/portal/invoices/${invoice.deposit.id}`} className="font-semibold underline">{invoice.deposit.invoiceNumber}</Link></> : ""}</p>}
       <article className="mx-auto max-w-3xl rounded-2xl bg-white p-8 text-slate-900 shadow-xl print:rounded-none print:p-0 print:shadow-none sm:p-12">
         <div className="flex flex-wrap justify-between gap-8 border-b border-slate-200 pb-8">
-          <div><p className="text-sm font-semibold tracking-[0.2em] text-cyan-700">N3xUs Konc3pt'z</p><h1 className="mt-3 text-3xl font-bold">INVOICE</h1><p className="mt-2 text-sm text-slate-500">{invoice.invoiceNumber}</p></div>
+          <div><p className="text-sm font-semibold tracking-[0.2em] text-cyan-700">N3xUs Konc3pt'z</p><h1 className="mt-3 text-3xl font-bold">{isQuote ? "QUOTE" : "INVOICE"}</h1><p className="mt-2 text-sm text-slate-500">{invoice.invoiceNumber}</p></div>
           <div className="text-right"><p className="text-sm font-semibold">{invoice.status}</p><p className="mt-2 text-sm text-slate-500">Issued {invoice.createdAt.toLocaleDateString()}</p>{invoice.dueAt && <p className="mt-1 text-sm text-slate-500">Due {invoice.dueAt.toLocaleDateString()}</p>}</div>
         </div>
         <div className="grid gap-8 py-8 sm:grid-cols-2">
