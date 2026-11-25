@@ -518,6 +518,25 @@ export type JournalPost = {
 
 export const JOURNAL: JournalPost[] = [
   {
+    slug: "landing-page-vs-website-san-antonio",
+    title: "Landing page vs. website: which one does a San Antonio business need?",
+    date: "2026-11-25",
+    readMin: 5,
+    category: "Design / Conversion",
+    dek: "One page with one job, or the whole business online: how to tell which one you need first.",
+    image: "/images/studio-desk.jpg",
+    body: [
+      "A landing page San Antonio businesses ask us about is usually one page with one job: get the visitor to do one thing. Book the table. Get the quote. Call the shop. A website is the whole business online: the services, the about page, the hours, the contact page, the pages Google finds when someone searches for what you do. The question is not which one is better. The question is which job you need done first.",
+      "A landing page is enough when you have one offer and one audience. A roofer running ads after a hail storm. A food truck announcing a new spot for the weekend. A shop pushing one seasonal sale. The visitor arrives, reads the offer, sees the proof, fills in the form. There is nothing else to click, and that is the point. Our landing page is $150: one page, custom designed and built, with the copy, the layout, and a form that actually submits.",
+      "A landing page is not enough when people need to find you and learn about you. Someone hears your name from a friend and searches for it. They want your hours, your menu, your services, your location. A single page cannot carry all of that, and it cannot rank for the searches that bring you new customers. That is what a website is for. Web design is $750, and it is the address you own instead of a page you rent from an ad platform.",
+      "The mistake we see most is buying the big site first and then never finishing the copy for it, or buying the landing page and then trying to make it do the work of a site. Both cost more than doing it in the right order. Start with the page that makes money, then add the pages that answer questions. We build a landing page so it can grow into a site, same design language and same code, instead of building something you throw away in six months.",
+      "Cost is the other half of the decision, and it should be plain. A landing page is $150. A full website design is $750. If the site needs real engineering, bookings, accounts, an API, a store, web development is $1,250. Managed site hosting is $19.99 a month, which covers the box, the certificate, the backups, and the updates. Those are final prices, not starting points, and a custom site from us is built in 14 days or less. If a quote does not list what is included, it is not a quote. After launch, the two need different care. A landing page is a campaign asset: you check the form submissions, you change the offer when the campaign ends, and most months there is nothing to do. A website is a living address: hours change, services change, pages get added, and someone has to keep the software patched and the backups running. That is what managed hosting is for, and it is why a landing page on its own is cheap to own and a website on its own needs an owner. Neither one maintains itself, and the page nobody updates is the page that starts lying about your hours.",
+      "Three questions settle it. First, do people search for more than one thing you do? If yes, you need the pages a website gives you. Second, do you need to be found on Google for your services? A landing page can rank for one thing. A website can rank for all of them. Third, are you running ads to one offer? That is the landing page's job, and a website with five exits will do it worse. If you answered yes to the first two, get the website. If only the third applies, get the landing page and spend the difference on the ads.",
+      "There is one more case worth naming: the business that already has a website and still needs a landing page. Your site answers every question. Your ad answers one. Sending ad traffic to the homepage is how a good offer dies in a navigation menu. A landing page gives the ad somewhere to land that matches what the ad promised, same offer, same words, same button. It is not a replacement for the site. It is the front door you build for one campaign.",
+      "What we ask before we build either one is the same: what is the offer, who is it for, and what is the one action you want? If you cannot name the one action, you need the website conversation first, because a page without a job is a brochure. If you can name it in one sentence, the landing page is probably the right spend. Either way, the answer is in the brief, not in the template. Write to studio@n3xuskonc3ptz.com or call 210-275-1837 and tell us the offer. We will tell you which one it needs.",
+    ],
+  },
+  {
     slug: "rise-of-agentic-coding-ai-software-development",
     title: "Agentic coding is not a junior hire",
     date: "2026-06-21",
