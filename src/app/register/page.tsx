@@ -44,7 +44,7 @@ export default function Register() {
         }
         throw new Error(d.error || "Registration failed");
       }
-      setDone("Account created. Check your email for the verification link — you can sign in once your email is confirmed.");
+      setDone(d.message || "Account created. Check your email for the verification link — you can sign in once your email is confirmed.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Registration failed");
     } finally {

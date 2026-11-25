@@ -11,7 +11,13 @@ async function main() {
   if (existing.role !== "OWNER" && existing.role !== "ADMIN") throw new Error("That email is registered as a client, not an owner. Use a different email.");
   await prisma.user.update({
     where: { email },
-    data: { passwordHash: await bcrypt.hash(password, 12), emailVerified: existing.emailVerified ?? new Date() },
+    data: {
+      passwordHash: await bcrypt.hash(password, 12),
+      emailVerified: existing.emailVerified ?? new Date(),
+      // Revoke every session: a password reset must not leave an old
+      // (possibly compromised) session alive.
+      tokenVersion: { increment: 1 },
+    },
   });
   console.log(`Owner password updated: ${email} (email verified)`);
 }

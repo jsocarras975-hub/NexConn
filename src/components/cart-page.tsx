@@ -12,14 +12,49 @@ export function CartPage() {
   const [ready,setReady] = useState(false);
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
+  const [notice,setNotice] = useState("");
 
   useEffect(() => {
-    try { setItems(JSON.parse(localStorage.getItem(KEY)||"[]")); } catch { setItems([]); }
-    setReady(true);
+    let cancelled = false;
+    const load = () => {
+      try { setItems(JSON.parse(localStorage.getItem(KEY)||"[]")); } catch { setItems([]); }
+    };
+    load();
+    // Refresh prices from the server: the cart must show the database price
+    // that will actually be charged, not the snapshot saved when the item
+    // was added. Items that are no longer for sale are removed.
+    fetch("/api/products")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.products) return;
+        const byId = new Map<string, { name: string; priceCents: number; currency: string }>(
+          data.products.map((p: { id: string; name: string; priceCents: number; currency: string }) => [p.id, p]),
+        );
+        setItems((current) => {
+          const refreshed: CartItem[] = [];
+          let removed = 0;
+          for (const item of current) {
+            const live = byId.get(item.productId);
+            if (!live) { removed++; continue; }
+            refreshed.push({ ...item, name: live.name, priceCents: live.priceCents, currency: live.currency });
+          }
+          if (removed > 0) setNotice("One or more items were removed because they are no longer for sale.");
+          if (removed > 0 || refreshed.some((item, i) => item.priceCents !== current[i]?.priceCents)) {
+            localStorage.setItem(KEY, JSON.stringify(refreshed));
+            window.dispatchEvent(new Event("nexcon-cart-updated"));
+          }
+          return refreshed;
+        });
+      })
+      .catch(() => {
+        // Server unreachable: keep the saved cart; the server still verifies
+        // prices at checkout, so a stale display cannot change the charge.
+      })
+      .finally(() => { if (!cancelled) setReady(true); });
     const refresh=()=>{try{setItems(JSON.parse(localStorage.getItem(KEY)||"[]"));}catch{setItems([]);}};
     window.addEventListener("nexcon-cart-updated",refresh);
     window.addEventListener("storage",refresh);
-    return ()=>{window.removeEventListener("nexcon-cart-updated",refresh);window.removeEventListener("storage",refresh);};
+    return ()=>{cancelled = true; window.removeEventListener("nexcon-cart-updated",refresh);window.removeEventListener("storage",refresh);};
   }, []);
 
   function save(next:CartItem[]) { setItems(next); localStorage.setItem(KEY,JSON.stringify(next)); window.dispatchEvent(new Event("nexcon-cart-updated")); }
@@ -50,7 +85,9 @@ export function CartPage() {
     </article>)}</div>
     <aside className="card h-fit p-6"><h2 className="text-lg font-semibold">Order summary</h2><div className="mt-5 flex justify-between text-sm text-slate-400"><span>Subtotal</span><span>{format(total,currency)}</span></div><div className="mt-3 flex justify-between text-sm text-slate-400"><span>Tax</span><span>Calculated at checkout</span></div><div className="my-5 border-t border-white/10"/><div className="flex justify-between font-semibold"><span>Total before tax</span><span>{format(total,currency)}</span></div>
       {mixed?<p className="mt-4 text-xs text-amber-300">Separate carts are needed for products in different currencies.</p>:<button disabled={busy} onClick={checkout} className="btn-primary mt-6 w-full disabled:opacity-50">{busy?"Preparing checkout…":"Continue to secure checkout"}</button>}
-      {error&&<p role="alert" className="mt-3 text-xs text-rose-300">{error}</p>}<p className="mt-4 text-xs leading-5 text-slate-500">Prices are loaded again and verified on the server before checkout. Payment is processed by Stripe.</p>
+      {error&&<p role="alert" className="mt-3 text-xs text-rose-300">{error}</p>}
+      {notice&&<p role="status" className="mt-3 text-xs text-amber-300">{notice}</p>}
+      <p className="mt-4 text-xs leading-5 text-slate-500">Prices are refreshed from the store and verified on the server before checkout. Payment is processed by Stripe.</p>
     </aside>
   </div>;
 }

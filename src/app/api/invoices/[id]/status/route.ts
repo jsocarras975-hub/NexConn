@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -42,14 +43,41 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Only sent or overdue invoices can be marked paid." }, { status: 409, headers: noStore });
   }
 
-  const updated = await prisma.invoice.update({
-    where: { id },
+  const updated = await prisma.invoice.updateMany({
+    where: {
+      id,
+      // Guarded by status so a concurrent webhook settlement cannot be
+      // overwritten: a read-then-update here could flip a just-PAID invoice
+      // back to VOID. If the status moved since the read, count is 0.
+      status:
+        parsed.data.status === "SENT" ? "DRAFT"
+        : parsed.data.status === "PAID" ? { in: ["SENT", "OVERDUE"] }
+        : { in: ["DRAFT", "SENT", "OVERDUE"] },
+    },
     data: {
       status: parsed.data.status,
       ...(parsed.data.status === "PAID" ? { paidAt: new Date() } : {}),
     },
-    select: { id: true, invoiceNumber: true, status: true, paidAt: true },
   });
+  if (updated.count !== 1) {
+    return NextResponse.json({ error: "Invoice status changed. Refresh and try again." }, { status: 409, headers: noStore });
+  }
+
+  // A voided or hand-marked-paid invoice must not stay payable: expire the
+  // open Checkout session so the customer cannot pay it afterwards, and
+  // clear the session id so a later checkout starts fresh.
+  if ((parsed.data.status === "VOID" || parsed.data.status === "PAID") && existing.stripeCheckoutSession && process.env.STRIPE_SECRET_KEY) {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    await stripe.checkout.sessions.expire(existing.stripeCheckoutSession).catch((error) => {
+      console.error("Could not expire invoice checkout session", { invoiceId: id, error });
+    });
+    await prisma.invoice.updateMany({
+      where: { id, stripeCheckoutSession: existing.stripeCheckoutSession },
+      data: { stripeCheckoutSession: null },
+    });
+  }
+
+  const invoice = { id, invoiceNumber: existing.invoiceNumber, status: parsed.data.status, paidAt: parsed.data.status === "PAID" ? new Date() : existing.paidAt };
 
   await prisma.auditLog.create({
     data: {
@@ -61,7 +89,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
 
   let emailSent = false;
-  if (parsed.data.status === "SENT") {
+  // An invoice whose customer deleted their account has no one to email;
+  // the status change still stands, it just skips the notification.
+  if (parsed.data.status === "SENT" && existing.user) {
     const appUrl = (process.env.APP_URL || "").replace(/\/+$/, "");
     const invoiceUrl = appUrl ? `${appUrl}/portal/invoices/${id}` : "";
     const amount = new Intl.NumberFormat("en-US", {
@@ -87,5 +117,5 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
   }
 
-  return NextResponse.json({ invoice: updated, emailSent }, { headers: noStore });
+  return NextResponse.json({ invoice, emailSent }, { headers: noStore });
 }

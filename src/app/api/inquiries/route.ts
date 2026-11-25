@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { inquirySchema } from "@/lib/validators";
 import { sendEmail } from "@/lib/email";
@@ -37,10 +37,22 @@ export async function POST(req: Request) {
     if (process.env.OWNER_EMAIL) {
       const safeName = parsed.data.name.replace(/[&<>"]/g, "");
       const safeService = parsed.data.service.replace(/[&<>"]/g, "");
-      void sendEmail({
-        to: process.env.OWNER_EMAIL,
-        subject: `New N3xUs Konc3pt'z inquiry: ${safeService}`,
-        html: `<p>New project inquiry from ${safeName} (${parsed.data.email}).</p><p>Service: ${safeService}</p><p>${parsed.data.details.replace(/[&<>"]/g, "")}</p>`,
+      const safeDetails = parsed.data.details.replace(/[&<>"]/g, "");
+      const ownerEmail = process.env.OWNER_EMAIL;
+      const senderEmail = parsed.data.email;
+      // Send after the response so a slow mail provider never delays the
+      // inquiry confirmation. Failures are logged, not swallowed.
+      after(async () => {
+        try {
+          const result = await sendEmail({
+            to: ownerEmail,
+            subject: `New N3xUs Konc3pt'z inquiry: ${safeService}`,
+            html: `<p>New project inquiry from ${safeName} (${senderEmail}).</p><p>Service: ${safeService}</p><p>${safeDetails}</p>`,
+          });
+          if (!result.sent) console.error("Inquiry notification email failed", result.reason);
+        } catch (error) {
+          console.error("Inquiry notification email failed", error);
+        }
       });
     }
 

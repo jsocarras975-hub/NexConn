@@ -21,7 +21,6 @@ export async function GET() {
           status: { in: ["PAID", "FULFILLED"] },
         },
         product: {
-          downloadUrl: { not: null },
           downloadKey: { not: null },
         },
       },
@@ -43,8 +42,9 @@ export async function GET() {
       take: 200,
     });
 
-    // Do not expose downloadUrl or downloadKey. The actual download gateway is
-    // intentionally withheld until private object storage and signed URLs are configured.
+    // Do not expose downloadKey. The actual download gateway is
+    // /api/orders/[orderId]/downloads, which issues a 5-minute signed URL
+    // per purchase via createPrivateDownloadUrl.
     const library = purchases.map((purchase) => ({
       purchaseItemId: purchase.id,
       orderId: purchase.orderId,

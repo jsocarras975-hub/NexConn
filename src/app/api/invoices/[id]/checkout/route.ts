@@ -33,14 +33,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const prior = await stripe.checkout.sessions.retrieve(invoice.stripeCheckoutSession).catch(() => null);
       if (prior?.status === "open" && prior.url) return NextResponse.json({ url: prior.url }, { headers: { "Cache-Control": "no-store" } });
     }
+    // The idempotency key must be unique per session creation, not per
+    // invoice: reusing `n3xus-invoice-${id}` for a replacement session makes
+    // Stripe return the cached (possibly expired) session, or reject the
+    // call when the amount changed. Tie the key to the previous session id
+    // and the amount, so a retry of the same attempt is idempotent but a
+    // genuinely new session gets a fresh key.
+    const idempotencyKey = `n3xus-invoice-${invoice.id}-${invoice.stripeCheckoutSession ?? "none"}-${invoice.totalCents}`;
     const session = await stripe.checkout.sessions.create({
-      mode: "payment", customer_email: invoice.user.email, client_reference_id: invoice.id,
+      mode: "payment", customer_email: invoice.user?.email ?? user.email, client_reference_id: invoice.id,
       metadata: { invoiceId: invoice.id, userId: user.id, invoiceNumber: invoice.invoiceNumber },
       payment_intent_data: { metadata: { invoiceId: invoice.id, userId: user.id } },
       line_items: [{ quantity: 1, price_data: { currency: invoice.currency.toLowerCase(), unit_amount: invoice.totalCents, product_data: { name: `N3xUs Konc3pt'z invoice ${invoice.invoiceNumber}` } } }],
       success_url: `${appUrl}/portal/invoices/${invoice.id}?payment=success`,
       cancel_url: `${appUrl}/portal/invoices/${invoice.id}?payment=cancelled`,
-    }, { idempotencyKey: `n3xus-invoice-${invoice.id}` });
+    }, { idempotencyKey });
     if (!session.url) throw new Error("Stripe did not return a checkout URL.");
     const saved = await prisma.invoice.updateMany({ where: { id, userId: user.id, status: { in: ["SENT", "OVERDUE"] } }, data: { stripeCheckoutSession: session.id } });
     if (saved.count !== 1) {

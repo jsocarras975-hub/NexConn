@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isOverdueInvoice } from "@/lib/invoices";
 
 export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "no-store, max-age=0" };
@@ -21,9 +22,9 @@ function monthKey(date: Date) {
 }
 
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: noStore });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: noStore });
+  const auth = await requireAdmin(noStore);
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   const now = new Date();
   const firstMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
@@ -167,13 +168,15 @@ export async function GET() {
     m.set(key, (m.get(key) || 0) + cents);
   };
   for (const order of orders) {
+    // Orders from deleted accounts have no userId; they carry no customer.
+    if (!order.userId) continue;
     const at = order.paidAt || order.createdAt;
     const prev = lastActivity.get(order.userId);
     if (!prev || at > prev) lastActivity.set(order.userId, at);
     if (order.paidAt) addSpend(order.userId, order.currency, Math.max(0, order.totalCents - order.refundedCents));
   }
   for (const invoice of invoices) {
-    if (!invoice.paidAt) continue;
+    if (!invoice.paidAt || !invoice.userId) continue;
     const prev = lastActivity.get(invoice.userId);
     if (!prev || invoice.paidAt > prev) lastActivity.set(invoice.userId, invoice.paidAt);
     addSpend(invoice.userId, invoice.currency, invoice.totalCents);
@@ -210,13 +213,11 @@ export async function GET() {
   const last12Row = revenueByCurrency.get(primaryCurrency) || { orderNetCents: 0, invoicePaidCents: 0 };
   const pipeRow = forecastByCurrency.get(primaryCurrency) || { weightedCents: 0, grossCents: 0, leads: 0 };
 
-  const isOverdueInvoice = (inv: { status: string; dueAt: Date | null }) =>
-    inv.status === "OVERDUE" || (inv.status === "SENT" && inv.dueAt !== null && inv.dueAt.getTime() < now.getTime());
   const invTotals = new Map<string, { dueCents: number; dueCount: number; overdueCents: number; overdueCount: number }>();
   for (const inv of invoiceOutstanding) {
     const currency = inv.currency.toUpperCase();
     const t = invTotals.get(currency) || { dueCents: 0, dueCount: 0, overdueCents: 0, overdueCount: 0 };
-    if (isOverdueInvoice(inv)) { t.overdueCents += inv.totalCents; t.overdueCount += 1; }
+    if (isOverdueInvoice(inv, now)) { t.overdueCents += inv.totalCents; t.overdueCount += 1; }
     else { t.dueCents += inv.totalCents; t.dueCount += 1; }
     invTotals.set(currency, t);
   }
@@ -278,8 +279,8 @@ export async function GET() {
       totalClients,
     },
     queues: {
-      orders: recentOrders.map((o) => ({ id: o.id, status: o.status, totalCents: o.totalCents, currency: o.currency, createdAt: o.createdAt, customerName: o.user.name, customerEmail: o.user.email, items: o._count.items })),
-      invoices: invoiceQueue.map((i) => ({ id: i.id, invoiceNumber: i.invoiceNumber, status: i.status, totalCents: i.totalCents, currency: i.currency, dueAt: i.dueAt, createdAt: i.createdAt, customerName: i.user.name, customerEmail: i.user.email })),
+      orders: recentOrders.map((o) => ({ id: o.id, status: o.status, totalCents: o.totalCents, currency: o.currency, createdAt: o.createdAt, customerName: o.user?.name ?? "Deleted account", customerEmail: o.user?.email ?? "", items: o._count.items })),
+      invoices: invoiceQueue.map((i) => ({ id: i.id, invoiceNumber: i.invoiceNumber, status: i.status, totalCents: i.totalCents, currency: i.currency, dueAt: i.dueAt, createdAt: i.createdAt, customerName: i.user?.name ?? "Deleted account", customerEmail: i.user?.email ?? "" })),
       inquiries: recentInquiries.map((q) => ({ id: q.id, name: q.name, email: q.email, company: q.company, service: q.service, createdAt: q.createdAt })),
       tickets: openTickets.map((t) => ({ id: t.id, subject: t.subject, status: t.status, priority: t.priority, createdAt: t.createdAt, customerName: t.user.name, customerEmail: t.user.email })),
       leads: recentLeads.map((l) => ({ id: l.id, name: l.name, company: l.company, stage: l.stage, estimatedValueCents: l.estimatedValueCents, currency: l.currency, createdAt: l.createdAt })),

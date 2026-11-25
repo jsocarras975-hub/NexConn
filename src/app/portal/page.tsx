@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/format";
 import { ArrowUpRight, FolderKanban, Receipt, LifeBuoy, Library } from "lucide-react";
 import { OrderDownloads } from "@/components/order-downloads";
+import { SignOutForm } from "@/components/sign-out-form";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function Portal() {
     prisma.orderItem.count({
       where: {
         order: { userId: user.id, status: { in: ["PAID", "FULFILLED"] } },
-        product: { downloadUrl: { not: null }, downloadKey: { not: null } },
+        product: { downloadKey: { not: null } },
       },
     }),
   ]);
@@ -33,7 +34,7 @@ export default async function Portal() {
           <h1 className="mt-3 text-3xl font-semibold">Welcome, {user.name.split(" ")[0]}.</h1>
           <p className="mt-2 text-sm text-slate-400">Your projects, purchases, and support in one place.</p>
         </div>
-        <form action="/api/auth/logout" method="post"><button className="btn-secondary">Sign out</button></form>
+        <SignOutForm />
       </div>
 
       <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

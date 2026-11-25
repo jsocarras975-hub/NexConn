@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Turnstile } from "@/components/turnstile";
+import { safeNextParam } from "@/lib/redirect";
 
 const siteKeyConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
-export default function Login() {
+function LoginForm() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -15,6 +16,8 @@ export default function Login() {
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNextParam(searchParams.get("next"));
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,7 +45,7 @@ export default function Login() {
         }
         throw new Error(d.error || "Sign in failed");
       }
-      router.push("/portal");
+      router.push(next);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign in failed");
@@ -100,5 +103,15 @@ export default function Login() {
         <p className="mt-6 text-sm text-slate-400">New to N3xUs Konc3pt'z? <Link className="text-cyan-300" href="/register">Create a client account</Link></p>
       </div>
     </main>
+  );
+}
+
+// useSearchParams needs a Suspense boundary in the App Router, otherwise
+// the page fails to prerender.
+export default function Login() {
+  return (
+    <Suspense fallback={<main className="container section max-w-xl"><div className="card p-8"><p className="text-sm text-slate-400">Loading…</p></div></main>}>
+      <LoginForm />
+    </Suspense>
   );
 }

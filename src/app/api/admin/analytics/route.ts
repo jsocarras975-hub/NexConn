@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +10,9 @@ function monthKey(date: Date) {
 }
 
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: noStore });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: noStore });
+  const auth = await requireAdmin(noStore);
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   const now = new Date();
   const firstMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
@@ -58,6 +58,8 @@ export async function GET() {
     bucket.orders += 1;
     monthly.set(key, bucket);
 
+    // Orders from deleted accounts have no user; they carry no customer.
+    if (!order.userId || !order.user) continue;
     const customerKey = `${order.userId}:${currency}`;
     const customer = customerTotals.get(customerKey) || {
       userId: order.userId, name: order.user.name, email: order.user.email,

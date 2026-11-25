@@ -5,6 +5,7 @@ import { registerSchema } from "@/lib/validators";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { verifyCaptcha } from "@/lib/captcha";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { auditLog } from "@/lib/audit";
 
 // Registration no longer signs the user in. The account is created
 // unverified and the user must confirm their email before login works.
@@ -33,9 +34,22 @@ export async function POST(req: Request) {
     const exists = await prisma.user.findUnique({ where: { email: normalized } });
     if (exists) {
       if (!exists.emailVerified) {
-        // Re-registration of an unverified address re-sends the link instead
-        // of leaking a second account or a duplicate-email error.
-        await sendVerificationEmail(exists);
+        // The account was never verified, so nobody has proven they own
+        // this address. Let the registrant take it over with their own name
+        // and password: whoever controls the inbox completes verification
+        // and owns the account. This closes the pre-hijack hole where an
+        // attacker registers a victim's email, and the victim verifying
+        // later hands the attacker a verified account. Bump tokenVersion so
+        // any sessions from the earlier registration are dead.
+        const reclaimed = await prisma.user.update({
+          where: { id: exists.id },
+          data: {
+            name,
+            passwordHash: await bcrypt.hash(password, 12),
+            tokenVersion: { increment: 1 },
+          },
+        });
+        await sendVerificationEmail(reclaimed);
         return NextResponse.json(
           {
             error: "This email is registered but not verified. Check your inbox for the verification link.",
@@ -45,14 +59,32 @@ export async function POST(req: Request) {
           { status: 409 },
         );
       }
-      return NextResponse.json({ error: "An account with that email already exists." }, { status: 409 });
+      // The address is already verified. Do not reveal that: return the same
+      // 201 the caller gets for a new registration, with a message that is
+      // honest either way. No account is created and no email is sent.
+      return NextResponse.json(
+        {
+          ok: true,
+          requiresVerification: true,
+          message: "If this email is not already registered, a verification link has been sent — check your inbox.",
+        },
+        { status: 201 },
+      );
     }
 
     const user = await prisma.user.create({
       data: { name, email: normalized, passwordHash: await bcrypt.hash(password, 12), role: "CLIENT" },
     });
     await sendVerificationEmail(user);
-    return NextResponse.json({ ok: true, requiresVerification: true }, { status: 201 });
+    await auditLog({ actorId: user.id, action: "ACCOUNT_REGISTERED", target: user.id, req });
+    return NextResponse.json(
+      {
+        ok: true,
+        requiresVerification: true,
+        message: "Account created. Check your email for the verification link — you can sign in once your email is confirmed.",
+      },
+      { status: 201 },
+    );
   } catch {
     return NextResponse.json({ error: "Unable to create account." }, { status: 500 });
   }

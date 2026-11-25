@@ -21,6 +21,7 @@ export async function GET() {
   </item>`,
   ).join("\n");
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/rss.xsl"?>
 <rss version="2.0">
   <channel>
     <title>${esc(STUDIO.name)} — Journal</title>

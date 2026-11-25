@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { sameCartItems } from "@/lib/cart";
 
 const schema = z.object({
   items: z.array(
@@ -51,6 +52,11 @@ export async function POST(req: Request) {
     if (products.length !== ids.length) {
       return NextResponse.json({ error: "One or more products are unavailable." }, { status: 400 });
     }
+    // Never sell a product with no file attached: the store promises instant
+    // download, so a file-less product must not reach Stripe.
+    if (products.some((product) => !product.downloadKey)) {
+      return NextResponse.json({ error: "One or more products are not ready for download yet." }, { status: 400 });
+    }
 
     const currency = products[0].currency.toLowerCase();
     if (products.some((product) => product.currency.toLowerCase() !== currency)) {
@@ -63,48 +69,82 @@ export async function POST(req: Request) {
       unitPriceCents: product.priceCents,
     }));
     const subtotalCents = items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0);
+    const appUrl = process.env.APP_URL.replace(/\/+$/, "");
 
-    const order = await prisma.order.create({
-      data: {
+    // A double-click (or a retry) must not create a second order for the
+    // same cart: reuse a recent PENDING order for this user with identical
+    // items and total, and send the buyer to its checkout session.
+    const recent = await prisma.order.findMany({
+      where: {
         userId: user.id,
-        subtotalCents,
-        totalCents: subtotalCents,
+        status: "PENDING",
         currency,
-        items: { create: items },
+        totalCents: subtotalCents,
+        createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
       },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: { items: { select: { productId: true, quantity: true } } },
     });
+    const reusable = recent.find((o) => sameCartItems(o.items, items));
+    let orderId: string;
+    if (reusable) {
+      orderId = reusable.id;
+    } else {
+      const created = await prisma.order.create({
+        data: {
+          userId: user.id,
+          subtotalCents,
+          totalCents: subtotalCents,
+          currency,
+          items: { create: items },
+        },
+      });
+      orderId = created.id;
+    }
 
     const productById = new Map(products.map((product) => [product.id, product]));
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: user.email,
-      client_reference_id: order.id,
-      metadata: { orderId: order.id, userId: user.id },
-      line_items: items.map((item) => {
-        const product = productById.get(item.productId)!;
-        return {
-          quantity: item.quantity,
-          price_data: {
-            currency,
-            // Use the exact price snapshot persisted on the order.
-            unit_amount: item.unitPriceCents,
-            product_data: {
-              name: product.name,
-              description: product.summary.slice(0, 500),
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        customer_email: user.email,
+        client_reference_id: orderId,
+        metadata: { orderId, userId: user.id },
+        line_items: items.map((item) => {
+          const product = productById.get(item.productId)!;
+          return {
+            quantity: item.quantity,
+            price_data: {
+              currency,
+              // Use the exact price snapshot persisted on the order.
+              unit_amount: item.unitPriceCents,
+              product_data: {
+                name: product.name,
+                description: product.summary.slice(0, 500),
+              },
             },
-          },
-        };
-      }),
-      success_url: `${process.env.APP_URL}/portal?checkout=success`,
-      cancel_url: `${process.env.APP_URL}/marketplace?checkout=cancelled`,
-    }, {
-      // Stable per-order key prevents duplicate Stripe sessions on safe retries.
-      idempotencyKey: `n3xus-checkout-${order.id}`,
-    });
+          };
+        }),
+        success_url: `${appUrl}/portal?checkout=success`,
+        cancel_url: `${appUrl}/marketplace?checkout=cancelled`,
+      }, {
+        // Stable per-order key prevents duplicate Stripe sessions on safe retries.
+        idempotencyKey: `n3xus-checkout-${orderId}`,
+      });
+    } catch (error) {
+      // The Stripe call failed: cancel the order instead of leaving a
+      // PENDING orphan that looks payable but has no session.
+      await prisma.order.updateMany({
+        where: { id: orderId, status: "PENDING" },
+        data: { status: "CANCELLED" },
+      }).catch(() => undefined);
+      throw error;
+    }
 
     await prisma.order.update({
-      where: { id: order.id },
+      where: { id: orderId },
       data: { stripeCheckoutSession: session.id },
     });
 

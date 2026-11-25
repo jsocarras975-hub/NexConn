@@ -24,8 +24,14 @@ export function AccountProfile({ initialName, initialEmail, role }: {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to update profile.");
       setName(data.user.name); setEmail(data.user.email); setCurrentPassword("");
+      if (data.requiresVerification) {
+        // The email change revoked this session, so show the notice and send
+        // the user to sign in after they verify the new address.
+        setNotice("Email updated. We've sent a verification link to your new address — verify it, then sign in again.");
+        window.setTimeout(() => { window.location.href = "/login"; }, 4000);
+        return;
+      }
       setNotice("Your account details have been updated.");
-      window.location.reload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to update profile.");
     } finally { setBusy(false); }

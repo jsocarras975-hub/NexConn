@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const productSchema = z.object({
@@ -9,7 +9,7 @@ const productSchema = z.object({
   summary: z.string().trim().min(5).max(300),
   description: z.string().trim().min(10).max(10000),
   category: z.string().trim().min(2).max(80),
-  priceCents: z.number().int().nonnegative(),
+  priceCents: z.number().int().min(50, "Price must be at least 50 cents (Stripe's minimum).").max(99999999, "Price is too large."),
   currency: z.string().length(3).default("usd"),
   imageUrl: z.string().trim().url().max(2000).nullable().optional(),
   active: z.boolean().default(false),
@@ -17,8 +17,8 @@ const productSchema = z.object({
 });
 
 async function owner() {
-  const user = await getCurrentUser();
-  return user && ["OWNER", "ADMIN"].includes(user.role) ? user : null;
+  const auth = await requireAdmin();
+  return "user" in auth ? auth.user : null;
 }
 
 export async function GET() {
@@ -30,12 +30,12 @@ export async function GET() {
         id: true, slug: true, name: true, summary: true, description: true,
         category: true, priceCents: true, currency: true, imageUrl: true,
         active: true, featured: true, createdAt: true, updatedAt: true,
-        downloadUrl: true, downloadKey: true,
+        downloadKey: true,
       },
     });
-    const safeProducts = products.map(({ downloadUrl, downloadKey, ...product }) => ({
+    const safeProducts = products.map(({ downloadKey, ...product }) => ({
       ...product,
-      hasPrivateFile: Boolean(downloadUrl && downloadKey),
+      hasPrivateFile: Boolean(downloadKey),
     }));
     return NextResponse.json(
       { products: safeProducts },

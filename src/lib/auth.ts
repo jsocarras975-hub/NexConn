@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const COOKIE = "nexcon_session";
@@ -18,6 +19,8 @@ export async function createSession(userId: string) {
 
   const token = await new SignJWT({ sub: userId, ver: user.tokenVersion })
     .setProtectedHeader({ alg: "HS256" })
+    .setIssuer("n3xuskonc3ptz")
+    .setAudience("n3xuskonc3ptz-web")
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(secret());
@@ -47,7 +50,11 @@ export async function getCurrentUser() {
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
+    const { payload } = await jwtVerify(token, secret(), {
+      algorithms: ["HS256"],
+      issuer: "n3xuskonc3ptz",
+      audience: "n3xuskonc3ptz-web",
+    });
     if (!payload.sub || typeof payload.ver !== "number") return null;
     return await prisma.user.findUnique({
       where: { id: payload.sub },
@@ -60,8 +67,26 @@ export async function getCurrentUser() {
   }
 }
 
-export async function requireOwner() {
+export type AdminUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
+
+// The one OWNER/ADMIN guard for API routes. Returns the signed-in admin, or
+// a ready-to-return error response (401 when signed out, 403 when signed in
+// as a client). Callers use it as:
+//   const auth = await requireAdmin();
+//   if ("error" in auth) return auth.error;
+//   const user = auth.user;
+// This replaces the OWNER/ADMIN check that was copy-pasted into every admin
+// route. (The old requireOwner threw "FORBIDDEN", which an API route could
+// not turn into a proper JSON response, so nothing used it.)
+export async function requireAdmin(headers?: HeadersInit): Promise<{ user: AdminUser } | { error: NextResponse }> {
   const user = await getCurrentUser();
-  if (!user || !["OWNER", "ADMIN"].includes(user.role)) throw new Error("FORBIDDEN");
-  return user;
+  if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401, headers }) };
+  if (!["OWNER", "ADMIN"].includes(user.role)) return { error: NextResponse.json({ error: "Forbidden" }, { status: 403, headers }) };
+  return { user };
+}
+
+// True when the user may act as staff (owner or admin). Used where a route
+// serves both staff and the owning client, e.g. listing invoices/tickets.
+export function isStaff(user: { role: string }): boolean {
+  return ["OWNER", "ADMIN"].includes(user.role);
 }

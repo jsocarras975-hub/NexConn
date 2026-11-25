@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isOverdueInvoice } from "@/lib/invoices";
 
 export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "no-store, max-age=0" };
 
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: noStore });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: noStore });
+  const auth = await requireAdmin(noStore);
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   const [orders, invoices, recentInvoices, recentOrders] = await Promise.all([
     prisma.order.findMany({
@@ -31,6 +32,7 @@ export async function GET() {
     }),
   ]);
 
+  const now = new Date();
   const byCurrency = new Map<string, { orderGrossCents: number; orderRefundedCents: number; invoicePaidCents: number; invoiceOutstandingCents: number; invoiceOverdueCents: number }>();
   const bucket = (currency: string) => {
     const key = currency.toUpperCase();
@@ -46,10 +48,13 @@ export async function GET() {
     const b = bucket(invoice.currency);
     if (invoice.status === "PAID") b.invoicePaidCents += invoice.totalCents;
     if (invoice.status === "SENT") b.invoiceOutstandingCents += invoice.totalCents;
-    if (invoice.status === "OVERDUE") b.invoiceOverdueCents += invoice.totalCents;
+    // OVERDUE is never written as a status, so "overdue" is computed from
+    // the due date: a SENT invoice past its due date is overdue. Counting
+    // only status === "OVERDUE" left this at zero while the overdue count
+    // (below) used the due-date rule.
+    if (isOverdueInvoice(invoice, now)) b.invoiceOverdueCents += invoice.totalCents;
   }
 
-  const now = new Date();
   const agingByCurrency = new Map<string, { currentCents: number; days1to30Cents: number; days31to60Cents: number; days61to90Cents: number; days90PlusCents: number }>();
   const agingBucket = (currency: string) => {
     const key = currency.toUpperCase();
@@ -65,7 +70,7 @@ export async function GET() {
     else if (daysLate <= 90) b.days61to90Cents += invoice.totalCents;
     else b.days90PlusCents += invoice.totalCents;
   }
-  const overdueInvoices = invoices.filter(i => i.status === "OVERDUE" || (i.status === "SENT" && i.dueAt && i.dueAt < now));
+  const overdueInvoices = invoices.filter(i => isOverdueInvoice(i, now));
   const openInvoices = invoices.filter(i => ["SENT", "OVERDUE"].includes(i.status));
   const result = {
     currencies: [...byCurrency.entries()].map(([currency, values]) => ({ currency, ...values })),
@@ -80,15 +85,15 @@ export async function GET() {
     },
     overdue: overdueInvoices.slice(0, 20).map(i => ({
       id: i.id, invoiceNumber: i.invoiceNumber, status: i.status, totalCents: i.totalCents,
-      currency: i.currency, dueAt: i.dueAt, customer: i.user.name, email: i.user.email,
+      currency: i.currency, dueAt: i.dueAt, customer: i.user?.name ?? "Deleted account", email: i.user?.email ?? "",
     })),
     recentInvoices: recentInvoices.map(i => ({
       id: i.id, invoiceNumber: i.invoiceNumber, status: i.status, totalCents: i.totalCents,
-      currency: i.currency, createdAt: i.createdAt, dueAt: i.dueAt, customer: i.user.name,
+      currency: i.currency, createdAt: i.createdAt, dueAt: i.dueAt, customer: i.user?.name ?? "Deleted account",
     })),
     recentOrders: recentOrders.map(o => ({
       id: o.id, status: o.status, totalCents: o.totalCents, currency: o.currency,
-      updatedAt: o.updatedAt, customer: o.user.name,
+      updatedAt: o.updatedAt, customer: o.user?.name ?? "Deleted account",
     })),
   };
   return NextResponse.json(result, { headers: noStore });

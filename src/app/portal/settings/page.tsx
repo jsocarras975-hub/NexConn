@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AccountProfile } from "@/components/account-profile";
+import { DataControls } from "@/components/data-controls";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function AccountSettingsPage() {
         </p>
       </div>
       <AccountProfile initialName={user.name} initialEmail={user.email} role={user.role}/>
+      <DataControls/>
     </main>
   );
 }

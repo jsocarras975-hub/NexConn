@@ -20,13 +20,18 @@ export async function GET() {
     orderBy: { updatedAt: "desc" },
     include: {
       user: { select: { id: true, name: true, email: true } },
+      // Cap messages per ticket: an unbounded include turns 100 tickets
+      // into the whole message history. Latest 50, re-ordered oldest-first
+      // for the UI.
       messages: {
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
+        take: 50,
         include: { author: { select: { id: true, name: true, role: true } } },
       },
     },
     take: 100,
   });
+  for (const ticket of tickets) ticket.messages.reverse();
   return NextResponse.json({ tickets });
 }
 
@@ -46,7 +51,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const parsed = createSchema.safeParse(await req.json());
+  const parsed = createSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Check the ticket details." }, { status: 400 });
 
   try {

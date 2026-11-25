@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -9,81 +9,63 @@ function dayKey(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-function referrerDomain(referrer: string | null) {
-  if (!referrer) return "Direct";
-  try {
-    const host = new URL(referrer).hostname.replace(/^www\./, "");
-    return host || "Direct";
-  } catch {
-    return "Direct";
-  }
-}
-
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: noStore });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: noStore });
+  const auth = await requireAdmin(noStore);
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   const now = new Date();
   const start = new Date(now.getTime() - 30 * 86400000);
-  const todayKey = dayKey(now);
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
 
-  let views: { path: string; referrer: string | null; country: string | null; ipHash: string | null; createdAt: Date }[] = [];
+  // Aggregate in SQL. The old version fetched up to 50,000 rows ordered
+  // oldest-first and aggregated in JS, so once 30-day views passed 50k the
+  // newest rows — the ones the owner cares about — were silently dropped.
+  type CountRow = { views: bigint; visitors: bigint };
+  type DayRow = { day: Date; views: bigint; visitors: bigint };
+  type TopRow = { name: string; views: bigint };
+  let totals: CountRow[] = [];
+  let today: CountRow[] = [];
+  let days: DayRow[] = [];
+  let pages: TopRow[] = [];
+  let referrers: TopRow[] = [];
+  let countries: TopRow[] = [];
   try {
-    views = await prisma.pageView.findMany({
-      where: { createdAt: { gte: start } },
-      orderBy: { createdAt: "asc" },
-      take: 50000,
-      select: { path: true, referrer: true, country: true, ipHash: true, createdAt: true },
-    });
+    [totals, today, days, pages, referrers, countries] = await Promise.all([
+      prisma.$queryRaw<CountRow[]>`SELECT COUNT(*)::bigint AS views, COUNT(DISTINCT "ipHash")::bigint AS visitors FROM "PageView" WHERE "createdAt" >= ${start}`,
+      prisma.$queryRaw<CountRow[]>`SELECT COUNT(*)::bigint AS views, COUNT(DISTINCT "ipHash")::bigint AS visitors FROM "PageView" WHERE "createdAt" >= ${todayStart}`,
+      prisma.$queryRaw<DayRow[]>`SELECT DATE("createdAt") AS day, COUNT(*)::bigint AS views, COUNT(DISTINCT "ipHash")::bigint AS visitors FROM "PageView" WHERE "createdAt" >= ${start} GROUP BY DATE("createdAt") ORDER BY day ASC`,
+      prisma.$queryRaw<TopRow[]>`SELECT path AS name, COUNT(*)::bigint AS views FROM "PageView" WHERE "createdAt" >= ${start} GROUP BY path ORDER BY views DESC LIMIT 10`,
+      // Referrer is a full URL; group by its host (www. stripped), "Direct" when empty or not a URL.
+      prisma.$queryRaw<TopRow[]>`SELECT CASE WHEN referrer IS NULL OR referrer = '' THEN 'Direct' WHEN referrer LIKE 'http://%' OR referrer LIKE 'https://%' THEN COALESCE(NULLIF(REGEXP_REPLACE(SPLIT_PART(referrer, '/', 3), '^www\\.', ''), ''), 'Direct') ELSE 'Direct' END AS name, COUNT(*)::bigint AS views FROM "PageView" WHERE "createdAt" >= ${start} GROUP BY name ORDER BY views DESC LIMIT 10`,
+      prisma.$queryRaw<TopRow[]>`SELECT country AS name, COUNT(*)::bigint AS views FROM "PageView" WHERE "createdAt" >= ${start} AND country IS NOT NULL AND country <> '' GROUP BY country ORDER BY views DESC LIMIT 10`,
+    ]);
   } catch {
     // PageView table may not exist yet if the migration has not run.
     // Return empty stats rather than failing the command center.
-    views = [];
+    totals = []; today = []; days = []; pages = []; referrers = []; countries = [];
   }
 
-  const dailyMap = new Map<string, { views: number; visitors: Set<string> }>();
-  const pageMap = new Map<string, number>();
-  const refMap = new Map<string, number>();
-  const countryMap = new Map<string, number>();
-  const visitors30 = new Set<string>();
-  let todayViews = 0;
-  const todayVisitors = new Set<string>();
-
-  for (const v of views) {
-    const day = dayKey(v.createdAt);
-    let d = dailyMap.get(day);
-    if (!d) { d = { views: 0, visitors: new Set() }; dailyMap.set(day, d); }
-    d.views += 1;
-    if (v.ipHash) { d.visitors.add(v.ipHash); visitors30.add(v.ipHash); }
-    pageMap.set(v.path, (pageMap.get(v.path) || 0) + 1);
-    refMap.set(referrerDomain(v.referrer), (refMap.get(referrerDomain(v.referrer)) || 0) + 1);
-    if (v.country) countryMap.set(v.country, (countryMap.get(v.country) || 0) + 1);
-    if (day === todayKey) {
-      todayViews += 1;
-      if (v.ipHash) todayVisitors.add(v.ipHash);
-    }
-  }
-
+  const dayMap = new Map(days.map((d) => [dayKey(new Date(d.day)), { views: Number(d.views), visitors: Number(d.visitors) }]));
   const daily: { date: string; views: number; visitors: number }[] = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 86400000);
     const key = dayKey(d);
-    const row = dailyMap.get(key);
-    daily.push({ date: key, views: row?.views || 0, visitors: row?.visitors.size || 0 });
+    const row = dayMap.get(key);
+    daily.push({ date: key, views: row?.views || 0, visitors: row?.visitors || 0 });
   }
 
-  const top = (m: Map<string, number>, n = 10) =>
-    [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([name, views]) => ({ name, views }));
+  const top = (rows: TopRow[]) => rows.map((r) => ({ name: r.name, views: Number(r.views) }));
 
   return NextResponse.json({
-    totalViews: views.length,
-    uniqueVisitors: visitors30.size,
-    todayViews,
-    todayVisitors: todayVisitors.size,
+    totalViews: Number(totals[0]?.views ?? 0),
+    uniqueVisitors: Number(totals[0]?.visitors ?? 0),
+    todayViews: Number(today[0]?.views ?? 0),
+    todayVisitors: Number(today[0]?.visitors ?? 0),
     daily,
-    topPages: top(pageMap),
-    topReferrers: top(refMap),
-    topCountries: top(countryMap),
+    topPages: top(pages),
+    topReferrers: top(referrers),
+    topCountries: top(countries),
   }, { headers: noStore });
 }

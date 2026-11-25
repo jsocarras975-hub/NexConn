@@ -4,7 +4,7 @@ A full-stack digital studio platform starter: public website, service catalog, p
 
 ## Important status
 
-This is a runnable foundation, not a production-certified deployment. Stripe checkout, object storage, outbound email, ticket workflows, and richer order fulfillment are intentionally not enabled until real provider credentials and business rules are supplied. The product descriptions and case studies seeded here are placeholders and must be replaced before launch.
+This is a live production platform. Stripe checkout, private object storage for product files, outbound email, and ticket workflows are implemented and enabled: checkout is server-side with signature-verified webhooks and an idempotency ledger, product downloads are signed and ownership-checked, and invoices, orders, and CRM workflows run against PostgreSQL. The product descriptions and case studies seeded here are placeholders and must be replaced before launch.
 
 ## Requirements
 
@@ -92,16 +92,15 @@ Open http://localhost:3000.
 
 1. Set a unique 48+ character `AUTH_SECRET`; never commit `.env`.
 2. Use managed PostgreSQL with TLS, backups, restricted network access, and least-privilege credentials.
-3. Add distributed rate limiting to registration, login, and inquiry endpoints (for example Upstash Redis or an edge/WAF provider). The starter does not yet include distributed rate limiting.
-4. Add CAPTCHA or equivalent abuse controls to public forms.
-5. Configure email verification, password reset, and account recovery before accepting customers.
-6. Configure a real email provider and alerting.
-7. Configure private object storage with signed, short-lived download URLs. Never expose private product files as public static assets.
-8. Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `APP_URL`; register `/api/webhooks/stripe` in Stripe. Test successful, cancelled, duplicate, and refunded payment scenarios before launch.
-9. Add CSRF/origin checks to state-changing routes and review cookie/session rotation policy.
-10. Add audit logging to every owner mutation and implement granular permissions if staff accounts are introduced.
-11. Add automated tests, dependency scanning, security headers, CSP, and production monitoring.
-12. Replace placeholder products, case studies, policies, prices, and contact information with verified business content.
+3. Rate limiting is implemented on registration, login, inquiry, and checkout endpoints (Upstash Redis, fail-closed; `IP_HASH_SALT` keys the IP hash). Verify the Upstash keys are set in production.
+4. CAPTCHA is implemented on public forms via Cloudflare Turnstile (`NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`).
+5. Email verification, password reset, and account recovery are implemented; configure a real email provider (`RESEND_API_KEY`, `EMAIL_FROM`) and alerting.
+6. Configure private object storage with signed, short-lived download URLs. Never expose private product files as public static assets.
+7. Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `APP_URL`; register `/api/webhooks/stripe` in Stripe. Test successful, cancelled, duplicate, and refunded payment scenarios before launch.
+8. CSRF/origin checks are implemented on state-changing routes; sessions are signed HTTP-only JWTs with a `tokenVersion` revocation flag.
+9. Audit logging is implemented for owner mutations and auth events; review the `AuditLog` table for coverage as staff accounts are introduced.
+10. Automated tests (Vitest), security headers, and CSP are configured; add dependency scanning and production error monitoring.
+11. Replace placeholder products, case studies, policies, prices, and contact information with verified business content.
 
 ## Architecture
 
@@ -117,10 +116,10 @@ Open http://localhost:3000.
 ## Current limitations
 
 - Marketplace browsing is database-backed. Server-priced Stripe Checkout sessions and signed webhooks update order status. Paid customers can request five-minute S3-compatible signed download URLs when a private object key is attached to the product.
-- Product download delivery is not implemented.
+- Product download delivery is implemented: paid, ownership-checked, five-minute signed URLs from the private bucket. A product only shows as buyable once a file is attached.
 - Client portal displays project/order data and includes customer ticket creation and threaded replies. Owner console includes project creation/progress updates and support inbox replies.
-- Direct file uploads are not implemented. Upload digital files to a private S3-compatible bucket through a trusted operator workflow and set the product `downloadKey`; customer access is checked against paid order ownership and uses a five-minute signed URL. Optional inquiry notification email can be configured with Resend (`RESEND_API_KEY`, `EMAIL_FROM`, `OWNER_EMAIL`).
-- Inquiry form currently stores records; configure notifications and rate limiting before production.
+- Direct file uploads are implemented: an owner requests a presigned upload URL (type and size are signed and bound), uploads to the private bucket, then attaches the object key to the product. Optional inquiry notification email can be configured with Resend (`RESEND_API_KEY`, `EMAIL_FROM`, `OWNER_EMAIL`).
+- The inquiry form stores records, sends an owner notification email, and is rate-limited.
 - The case studies are sample concepts, not claims of completed client engagements.
 
 

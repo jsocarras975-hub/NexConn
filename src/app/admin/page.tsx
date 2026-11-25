@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Users, ShoppingBag, FolderKanban, MessageSquare, ArrowUpRight } from "lucide-react";
+import { SignOutForm } from "@/components/sign-out-form";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function Admin() {
           <h1 className="mt-3 text-3xl font-semibold">Control center.</h1>
           <p className="mt-2 text-sm text-slate-400">Operational overview for your business.</p>
         </div>
-        <form action="/api/auth/logout" method="post"><button className="btn-secondary">Sign out</button></form>
+        <SignOutForm />
       </div>
       <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map(([Icon, label, value]) => (

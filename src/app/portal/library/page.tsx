@@ -13,7 +13,7 @@ export default async function PortalLibraryPage() {
   const items = await prisma.orderItem.findMany({
     where: {
       order: { userId: user.id, status: { in: ["PAID", "FULFILLED"] } },
-      product: { downloadUrl: { not: null }, downloadKey: { not: null } },
+      product: { downloadKey: { not: null } },
     },
     orderBy: { order: { createdAt: "desc" } },
     select: {

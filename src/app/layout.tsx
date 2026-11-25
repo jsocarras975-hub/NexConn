@@ -1,11 +1,28 @@
 import type { Metadata, Viewport } from "next";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { CookieConsent } from "@/components/cookie-consent";
 import { PwaInstall } from "@/components/pwa-install";
 import { TrafficBeacon } from "@/components/traffic-beacon";
 import { STUDIO } from "@/data/studio";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { OG_IMAGE, safeJsonLd, SITE_NAME, SITE_URL } from "@/lib/seo";
+
+// Self-hosted via next/font: no request to Google Fonts leaves the browser,
+// and the fonts are subset and cached with the app.
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 const siteDescription = STUDIO.metaDescription;
 
@@ -63,17 +80,21 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#080b12" };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en">
+import { getBusinessSetting } from "@/lib/settings";
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const maintenanceNotice = await getBusinessSetting("maintenance_notice");
+  return <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`}>
     <head>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(orgJsonLd) }} />
     </head>
-    <body><SiteHeader />{children}<SiteFooter /><PwaInstall /><TrafficBeacon /></body>
+    <body>
+      {maintenanceNotice && (
+        <div className="bg-amber-400 px-4 py-2 text-center text-sm font-medium text-amber-950" role="status">
+          {maintenanceNotice}
+        </div>
+      )}
+      <SiteHeader />{children}<SiteFooter /><PwaInstall /><TrafficBeacon /><CookieConsent />
+    </body>
   </html>;
 }

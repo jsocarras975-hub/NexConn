@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createPrivateUploadUrl } from "@/lib/storage";
 
@@ -12,7 +12,6 @@ const allowedTypes: Record<string, string> = {
   "application/pdf": "pdf",
   "application/zip": "zip",
   "application/x-zip-compressed": "zip",
-  "application/octet-stream": "bin",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
 };
@@ -23,9 +22,9 @@ const schema = z.object({
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   let body: unknown;
   try { body = await req.json(); }

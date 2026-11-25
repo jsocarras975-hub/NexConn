@@ -1,4 +1,5 @@
-import { JOURNAL, SERVICES, STORE_PRODUCTS, WORK } from "@/data/studio";
+import { JOURNAL, SERVICES, WORK } from "@/data/studio";
+import { prisma } from "@/lib/prisma";
 
 // Always build fresh from the data — never serve a cached sitemap, so a
 // new journal post (or any content change) shows up immediately.
@@ -22,7 +23,8 @@ const staticRoutes = [
   "/contact",
   "/transmissions",
   "/marketplace",
-  "/cart",
+  // /cart is deliberately absent: robots.txt disallows it, and a sitemap
+  // must not list URLs the crawler is told not to visit.
 ];
 
 // Journal posts carry a publish date; the journal index tracks the newest
@@ -34,13 +36,23 @@ type Entry = { loc: string; lastmod?: string };
 const entry = (loc: string, lastmod?: string): Entry => ({ loc, lastmod });
 
 export async function GET() {
+  // Product URLs come from the database, not the static catalog: only
+  // products that are actually live and buyable belong in the sitemap.
+  let products: { slug: string; updatedAt: Date }[] = [];
+  try {
+    products = await prisma.product.findMany({ where: { active: true }, select: { slug: true, updatedAt: true } });
+  } catch {
+    // A sitemap must never 500 the whole site if the database is briefly
+    // unreachable; the static and journal entries still go out.
+    products = [];
+  }
   const urls: Entry[] = [
     ...staticRoutes.map((u) => entry(u === "" ? "/" : u, u === "/journal" ? latestJournalDate : undefined)),
     ...SERVICES.map((s) => entry(`/services/${s.slug}`)),
     ...WORK.map((w) => entry(`/work/${w.slug}`)),
     // Store products have no /store/[slug] page; their detail pages live in
     // the marketplace under the same slug.
-    ...STORE_PRODUCTS.map((p) => entry(`/marketplace/${p.slug}`)),
+    ...products.map((p) => entry(`/marketplace/${p.slug}`, p.updatedAt.toISOString().slice(0, 10))),
     ...JOURNAL.map((p) => entry(`/journal/${p.slug}`, p.date)),
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

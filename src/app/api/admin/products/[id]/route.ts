@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -9,7 +9,7 @@ const schema = z.object({
   summary: z.string().trim().min(5).max(300).optional(),
   description: z.string().trim().min(10).max(10000).optional(),
   category: z.string().trim().min(2).max(80).optional(),
-  priceCents: z.number().int().nonnegative().optional(),
+  priceCents: z.number().int().min(50, "Price must be at least 50 cents (Stripe's minimum).").max(99999999, "Price is too large.").optional(),
   currency: z.string().length(3).optional(),
   imageUrl: z.string().trim().url().max(2000).nullable().optional(),
   active: z.boolean().optional(),
@@ -17,9 +17,9 @@ const schema = z.object({
 }).refine((value) => Object.keys(value).length > 0);
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   let body: unknown;
   try { body = await req.json(); }

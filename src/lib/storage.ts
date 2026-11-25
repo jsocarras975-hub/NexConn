@@ -44,7 +44,14 @@ export async function createPrivateUploadUrl(args: {
     ContentLength: args.contentLength,
     ServerSideEncryption: "AES256",
   });
-  return getSignedUrl(client(), command, { expiresIn: 300 });
+  // Sign Content-Type and Content-Length explicitly: the default presigner
+  // does not bind them, so a client could upload a different type or size
+  // than the one the server approved. With them signed, S3 rejects a PUT
+  // whose headers do not match the approved values.
+  return getSignedUrl(client(), command, {
+    expiresIn: 300,
+    signableHeaders: new Set(["content-type", "content-length"]),
+  });
 }
 
 export async function inspectPrivateObject(key: string) {

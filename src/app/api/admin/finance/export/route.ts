@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +12,10 @@ function csvCell(value: unknown): string {
 }
 
 export async function GET() {
-  const user = await getCurrentUser();
   const headers = { "Cache-Control": "no-store, max-age=0", "X-Content-Type-Options": "nosniff" };
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403, headers });
+  const auth = await requireAdmin(headers);
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   const [orders, invoices] = await Promise.all([
     prisma.order.findMany({
@@ -37,13 +37,13 @@ export async function GET() {
     "amount_cents", "refunded_cents", "net_amount_cents", "currency", "record_date", "due_date", "paid_date", "date_semantics",
   ]];
   for (const order of orders) rows.push([
-    "ORDER", order.id, "", order.status, order.user.name, order.user.email,
+    "ORDER", order.id, "", order.status, order.user?.name ?? "Deleted account", order.user?.email ?? "",
     order.totalCents, order.refundedCents, Math.max(0, order.totalCents - order.refundedCents),
     order.currency, order.updatedAt, "", "",
     "updatedAt is last record update, not a verified payment settlement timestamp; refunds are reconciled from Stripe charge.refunded events",
   ]);
   for (const invoice of invoices) rows.push([
-    "INVOICE", invoice.id, invoice.invoiceNumber, invoice.status, invoice.user.name, invoice.user.email,
+    "INVOICE", invoice.id, invoice.invoiceNumber, invoice.status, invoice.user?.name ?? "Deleted account", invoice.user?.email ?? "",
     invoice.totalCents, "", "", invoice.currency, invoice.createdAt, invoice.dueAt, invoice.paidAt,
     "createdAt is invoice creation; paidAt is recorded invoice payment date",
   ]);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inspectPrivateObject } from "@/lib/storage";
 
@@ -12,15 +12,14 @@ const allowedTypes = new Set([
   "application/pdf",
   "application/zip",
   "application/x-zip-compressed",
-  "application/octet-stream",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]);
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["OWNER", "ADMIN"].includes(user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
 
   let body: unknown;
   try { body = await req.json(); }
@@ -43,7 +42,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const product = await prisma.product.update({
       where: { id },
-      data: { downloadKey: parsed.data.objectKey, downloadUrl: null },
+      data: { downloadKey: parsed.data.objectKey },
       select: { id: true, name: true },
     });
     await prisma.auditLog.create({

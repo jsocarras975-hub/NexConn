@@ -32,7 +32,7 @@ export default async function InvoiceDetail({ params, searchParams }: { params: 
           <div className="text-right"><p className="text-sm font-semibold">{invoice.status}</p><p className="mt-2 text-sm text-slate-500">Issued {invoice.createdAt.toLocaleDateString()}</p>{invoice.dueAt && <p className="mt-1 text-sm text-slate-500">Due {invoice.dueAt.toLocaleDateString()}</p>}</div>
         </div>
         <div className="grid gap-8 py-8 sm:grid-cols-2">
-          <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Billed to</p><p className="mt-2 font-semibold">{invoice.user.name}</p><p className="text-sm text-slate-600">{invoice.user.email}</p></div>
+          <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Billed to</p><p className="mt-2 font-semibold">{invoice.user?.name ?? "Deleted account"}</p><p className="text-sm text-slate-600">{invoice.user?.email ?? ""}</p></div>
           {invoice.project && <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Project</p><p className="mt-2 font-semibold">{invoice.project.title}</p></div>}
         </div>
         <table className="w-full border-collapse text-left text-sm">

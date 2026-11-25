@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      # Prisma generate needs a DATABASE_URL to run; a dummy value is enough
+      # for typecheck, lint, tests, and a build without a live database.
+      DATABASE_URL: postgresql://user:password@localhost:5432/n3xus
+      AUTH_SECRET: ci-placeholder-auth-secret-min-48-chars-0123456789
+      APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

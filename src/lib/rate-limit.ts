@@ -4,19 +4,25 @@ type RateLimitPolicy = {
   name: string;
   limit: number;
   windowSeconds: number;
+  // Optional per-account key (e.g. a normalized email). When set, the limit
+  // is keyed on the account instead of the IP, so a distributed attack on
+  // one account is still throttled.
+  accountKey?: string;
 };
 
 type RateLimitResult =
   | { allowed: true; configured: boolean }
   | { allowed: false; configured: true; retryAfter: number };
 
-function getClientKey(request: Request, policyName: string) {
-  // Vercel supplies x-real-ip. The forwarded-for fallback supports common
-  // reverse proxies; deploy only behind a proxy that sanitizes this header.
-  const ip =
-    request.headers.get("x-real-ip")?.trim() ||
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown";
+function getClientKey(request: Request, policyName: string, accountKey?: string) {
+  if (accountKey) {
+    const digest = createHash("sha256").update(`account:${accountKey}`).digest("hex").slice(0, 32);
+    return `nexcon:ratelimit:${policyName}:${digest}`;
+  }
+  // Only the platform-set header is trusted. x-forwarded-for is client
+  // controlled and must never be used to identify the caller — an attacker
+  // can rotate it to dodge the limit. On Vercel, x-real-ip is always set.
+  const ip = request.headers.get("x-real-ip")?.trim() || "unknown";
   const digest = createHash("sha256").update(ip).digest("hex").slice(0, 32);
   return `nexcon:ratelimit:${policyName}:${digest}`;
 }
@@ -49,7 +55,7 @@ export async function enforceRateLimit(
     return { allowed: true, configured: false };
   }
 
-  const key = getClientKey(request, policy.name);
+  const key = getClientKey(request, policy.name, policy.accountKey);
   // EVAL is a single command: Upstash documents it as a POST to the base
   // REST URL with the command as a JSON array, not inside /pipeline.
   const endpoint = url.replace(/\/+$/, "");

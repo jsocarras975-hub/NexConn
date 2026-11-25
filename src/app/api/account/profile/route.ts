@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { sendVerificationEmail } from "@/lib/email-verification";
 
 export const runtime = "nodejs";
 const noStore = { "Cache-Control": "no-store, max-age=0" };
@@ -48,11 +49,27 @@ export async function PATCH(req: Request) {
   }
 
   try {
+    // An email change un-verifies the account: the new address has not been
+    // proven, and the old sessions are revoked (tokenVersion bump) so the
+    // user signs in again only after verifying the new address.
     const updated = await prisma.user.update({
       where: { id: user.id },
-      data: { name: parsed.data.name, email: parsed.data.email },
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        ...(emailChanged
+          ? { emailVerified: null, tokenVersion: { increment: 1 } }
+          : {}),
+      },
       select: { id: true, name: true, email: true, role: true, updatedAt: true },
     });
+    if (emailChanged) {
+      try {
+        await sendVerificationEmail(updated);
+      } catch (error) {
+        console.error("Verification email for changed address failed", error);
+      }
+    }
     await prisma.auditLog.create({
       data: {
         actorId: user.id,
@@ -61,7 +78,7 @@ export async function PATCH(req: Request) {
         metadata: { emailChanged },
       },
     });
-    return NextResponse.json({ user: updated }, { headers: noStore });
+    return NextResponse.json({ user: updated, requiresVerification: emailChanged }, { headers: noStore });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
       return NextResponse.json({ error: "That email address is already in use." }, { status: 409, headers: noStore });

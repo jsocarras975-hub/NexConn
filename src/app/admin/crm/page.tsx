@@ -34,6 +34,8 @@ export default async function CrmPage() {
 
   const orderStats = new Map<string, { count: number; net: number }>();
   for (const order of orders) {
+    // Orders from deleted accounts have no userId; they carry no customer.
+    if (!order.userId) continue;
     const current = orderStats.get(order.userId) ?? { count: 0, net: 0 };
     if (["PAID", "FULFILLED", "REFUNDED"].includes(order.status)) {
       current.count += 1;
@@ -43,6 +45,7 @@ export default async function CrmPage() {
   }
   const invoiceStats = new Map<string, { count: number; open: number }>();
   for (const invoice of invoices) {
+    if (!invoice.userId) continue;
     const current = invoiceStats.get(invoice.userId) ?? { count: 0, open: 0 };
     current.count += 1;
     if (["SENT", "OVERDUE"].includes(invoice.status)) current.open += 1;

@@ -8,6 +8,14 @@ export const SITE_URL = (process.env.APP_URL || "https://n3xuskonc3ptz.com").rep
 export const SITE_NAME = "N3xUs Konc3pt'z";
 export const OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
+// Serialize JSON-LD for a <script> tag. Plain JSON.stringify is unsafe here:
+// a value containing "</script>" (or "<!--") would break out of the script
+// element. Escaping "<" as \u003c keeps the JSON valid while making the
+// output inert inside HTML.
+export function safeJsonLd(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 export function pageMetadata(path: string, title: string, description: string): Metadata {
   const url = `${SITE_URL}${path}`;
   return {

@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 // Content Security Policy. What the app actually loads in the browser:
-// - Same-origin scripts, styles, images and fonts (Next.js, Tailwind).
-// - Google Fonts (fonts.googleapis.com stylesheet, fonts.gstatic.com
-//   font files) for IBM Plex Sans / Mono — the studio's type system.
+// - Same-origin scripts, styles, images and fonts (Next.js, Tailwind,
+//   next/font — the IBM Plex fonts are self-hosted, so no Google Fonts
+//   request leaves the browser).
 //   Nothing else is loaded cross-origin: Stripe checkout is a server-side
 //   redirect (no Stripe.js in the browser), Resend is server-side only, and
 //   product images come from the configured S3 public base URL over HTTPS
@@ -16,16 +16,15 @@ import type { NextConfig } from "next";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "font-src 'self' data:",
   "connect-src 'self' https://challenges.cloudflare.com",
   "frame-src https://challenges.cloudflare.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "upgrade-insecure-requests",
 ].join("; ");
 
 const securityHeaders = [
@@ -37,6 +36,11 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  // HSTS: the site is HTTPS-only in production. Vercel does not add this
+  // for custom domains, so set it here. (upgrade-insecure-requests was
+  // removed: it breaks localhost in Safari and the site serves no HTTP
+  // resources in production anyway.)
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
 ];
 

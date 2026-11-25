@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ const leadSchema = z.object({
   source: z.enum(["WEBSITE","REFERRAL","SOCIAL","CAMPAIGN","OTHER"]).default("OTHER"),
   stage: z.enum(["NEW","CONTACTED","QUALIFIED","PROPOSAL","WON","LOST"]).default("NEW"),
   estimatedValueCents: z.number().int().min(0).max(1000000000).optional(),
-  currency: z.string().length(3).default("USD"), customerId: z.string().optional(),
+  currency: z.string().length(3).default("usd"), customerId: z.string().optional(),
   nextFollowUpAt: z.string().datetime().optional(),
 });
 const taskSchema = z.object({
@@ -35,10 +35,7 @@ const communicationSchema = z.object({
 });
 
 async function authorized() {
-  const user = await getCurrentUser();
-  if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401, headers }) };
-  if (!["OWNER","ADMIN"].includes(user.role)) return { error: NextResponse.json({ error: "Forbidden" }, { status: 403, headers }) };
-  return { user };
+  return requireAdmin(headers);
 }
 async function validateTargets(customerId?: string, leadId?: string) {
   if (customerId) {
@@ -53,9 +50,21 @@ export async function GET() {
   const auth = await authorized();
   if ("error" in auth) return auth.error;
   const now = new Date();
+  const startToday = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const endToday = new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+  // Insight counts come from COUNT queries, not from the fetched task list:
+  // the list is capped at 300 and ordered by due date, so counting open
+  // tasks from it would undercount once closed tasks fill the list.
+  const [openTaskCount, overdueTaskCount, dueTodayTaskCount] = await Promise.all([
+    prisma.crmTask.count({ where: { status: { in: ["OPEN","IN_PROGRESS"] } } }),
+    prisma.crmTask.count({ where: { status: { in: ["OPEN","IN_PROGRESS"] }, dueAt: { lt: now } } }),
+    prisma.crmTask.count({ where: { status: { in: ["OPEN","IN_PROGRESS"] }, dueAt: { gte: startToday, lt: endToday } } }),
+  ]);
   const [leads,tasks,notes,communications,workflows,workflowRuns,inquiries,customers,orders,invoices] = await Promise.all([
     prisma.crmLead.findMany({ orderBy: { updatedAt: "desc" }, take: 200 }),
-    prisma.crmTask.findMany({ orderBy: [{ status: "asc" }, { dueAt: "asc" }], take: 300 }),
+    // Most urgent first. Ordering by status alphabetically put OPEN last,
+    // so open tasks were truncated out of the 300 and the insights skewed.
+    prisma.crmTask.findMany({ orderBy: { dueAt: "asc" }, take: 300 }),
     prisma.crmNote.findMany({ orderBy: { createdAt: "desc" }, take: 300 }),
     prisma.crmCommunication.findMany({ orderBy: { occurredAt: "desc" }, take: 300 }),
     prisma.crmWorkflow.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
@@ -65,17 +74,14 @@ export async function GET() {
     prisma.order.findMany({ where: { user: { role: "CLIENT" } }, orderBy: { createdAt: "desc" }, take: 5000, select: { userId:true,status:true } }),
     prisma.invoice.findMany({ where: { user: { role: "CLIENT" } }, orderBy: { createdAt: "desc" }, take: 5000, select: { userId:true } }),
   ]);
-  const orderUsers = new Set(orders.filter(o => ["PAID","FULFILLED","REFUNDED"].includes(o.status)).map(o => o.userId));
-  const invoiceUsers = new Set(invoices.map(i => i.userId));
-  const openTasks = tasks.filter(t => ["OPEN","IN_PROGRESS"].includes(t.status));
-  const startToday = new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  const endToday = new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+  const orderUsers = new Set(orders.filter(o => ["PAID","FULFILLED","REFUNDED"].includes(o.status) && o.userId).map(o => o.userId as string));
+  const invoiceUsers = new Set(invoices.map(i => i.userId).filter((id): id is string => id !== null));
   const insights = {
     leadStages: ["NEW","CONTACTED","QUALIFIED","PROPOSAL","WON","LOST"].map(stage => ({ stage, count: leads.filter(l => l.stage === stage).length })),
     leadConversion: leads.length ? Math.round(leads.filter(l => l.stage === "WON").length / leads.length * 100) : 0,
-    openTasks: openTasks.length,
-    overdueTasks: openTasks.filter(t => t.dueAt && t.dueAt < now).length,
-    dueTodayTasks: openTasks.filter(t => t.dueAt && t.dueAt >= startToday && t.dueAt < endToday).length,
+    openTasks: openTaskCount,
+    overdueTasks: overdueTaskCount,
+    dueTodayTasks: dueTodayTaskCount,
     customerSegments: {
       marketplaceBuyers: customers.filter(c => orderUsers.has(c.id)).length,
       invoiceCustomers: customers.filter(c => invoiceUsers.has(c.id)).length,
@@ -99,6 +105,8 @@ export async function POST(request: Request) {
   if ("error" in auth) return auth.error;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid request." }, { status: 400, headers });
+  const audit = (action: string, target: string) =>
+    prisma.auditLog.create({ data: { actorId: auth.user.id, action, target } }).catch(() => undefined);
 
   if (body.type === "workflow") {
     const parsed = workflowSchema.safeParse(body);
@@ -112,6 +120,7 @@ export async function POST(request: Request) {
       name: d.name, trigger: d.trigger, action: d.action, config: {},
       enabled: true, createdById: auth.user.id,
     }});
+    await audit("CRM_WORKFLOW_CREATED", workflow.id);
     return NextResponse.json({ workflow }, { status: 201, headers });
   }
 
@@ -126,9 +135,10 @@ export async function POST(request: Request) {
     const lead = await prisma.crmLead.create({ data: {
       name: d.name, email: d.email || null, company: d.company || null, phone: d.phone || null,
       source: d.source, stage: d.stage, estimatedValueCents: d.estimatedValueCents ?? null,
-      currency: d.currency.toUpperCase(), customerId: d.customerId || null,
+      currency: d.currency.toLowerCase(), customerId: d.customerId || null,
       nextFollowUpAt: d.nextFollowUpAt ? new Date(d.nextFollowUpAt) : null, createdById: auth.user.id,
     }});
+    await audit("CRM_LEAD_CREATED", lead.id);
     return NextResponse.json({ lead }, { status: 201, headers });
   }
   if (body.type === "task") {
@@ -142,6 +152,7 @@ export async function POST(request: Request) {
       dueAt: d.dueAt ? new Date(d.dueAt) : null, customerId: d.customerId || null,
       leadId: d.leadId || null, createdById: auth.user.id,
     }});
+    await audit("CRM_TASK_CREATED", task.id);
     return NextResponse.json({ task }, { status: 201, headers });
   }
   if (body.type === "note") {
@@ -152,6 +163,7 @@ export async function POST(request: Request) {
     const error = await validateTargets(d.customerId, d.leadId);
     if (error) return NextResponse.json({ error }, { status: 400, headers });
     const note = await prisma.crmNote.create({ data: { body: d.body, customerId: d.customerId || null, leadId: d.leadId || null, authorId: auth.user.id } });
+    await audit("CRM_NOTE_CREATED", note.id);
     return NextResponse.json({ note }, { status: 201, headers });
   }
   if (body.type === "communication") {
@@ -166,6 +178,7 @@ export async function POST(request: Request) {
       customerId: d.customerId || null, leadId: d.leadId || null,
       authorId: auth.user.id, occurredAt: d.occurredAt ? new Date(d.occurredAt) : new Date(),
     }});
+    await audit("CRM_COMMUNICATION_CREATED", communication.id);
     return NextResponse.json({ communication }, { status: 201, headers });
   }
   return NextResponse.json({ error: "Unknown CRM record type." }, { status: 400, headers });
@@ -182,14 +195,28 @@ export async function PATCH(request: Request) {
   ]);
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid update." }, { status: 400, headers });
-  if (parsed.data.type === "workflow") {
-    const workflow = await prisma.crmWorkflow.update({ where: { id: parsed.data.id }, data: { enabled: parsed.data.enabled } });
-    return NextResponse.json({ workflow }, { headers });
+  const audit = (action: string, target: string) =>
+    prisma.auditLog.create({ data: { actorId: auth.user.id, action, target } }).catch(() => undefined);
+  try {
+    if (parsed.data.type === "workflow") {
+      const workflow = await prisma.crmWorkflow.update({ where: { id: parsed.data.id }, data: { enabled: parsed.data.enabled } });
+      await audit("CRM_WORKFLOW_UPDATED", workflow.id);
+      return NextResponse.json({ workflow }, { headers });
+    }
+    if (parsed.data.type === "lead") {
+      const lead = await prisma.crmLead.update({ where: { id: parsed.data.id }, data: { stage: parsed.data.stage } });
+      await audit("CRM_LEAD_UPDATED", lead.id);
+      return NextResponse.json({ lead }, { headers });
+    }
+    const task = await prisma.crmTask.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } });
+    await audit("CRM_TASK_UPDATED", task.id);
+    return NextResponse.json({ task }, { headers });
+  } catch (error) {
+    // A bad id throws P2025 ("record not found") — that is a 404, not a 500.
+    if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+      return NextResponse.json({ error: "Record not found." }, { status: 404, headers });
+    }
+    console.error("CRM update failed", error);
+    return NextResponse.json({ error: "Unable to update." }, { status: 500, headers });
   }
-  if (parsed.data.type === "lead") {
-    const lead = await prisma.crmLead.update({ where: { id: parsed.data.id }, data: { stage: parsed.data.stage } });
-    return NextResponse.json({ lead }, { headers });
-  }
-  const task = await prisma.crmTask.update({ where: { id: parsed.data.id }, data: { status: parsed.data.status } });
-  return NextResponse.json({ task }, { headers });
 }

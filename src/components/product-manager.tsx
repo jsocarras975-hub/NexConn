@@ -64,8 +64,8 @@ export function ProductManager() {
     if (!file) return;
     setUploading(product.id); setError(""); setNotice("");
     try {
-      const allowed = new Set(["application/pdf", "application/zip", "application/x-zip-compressed", "application/octet-stream", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]);
-      if (!allowed.has(file.type)) throw new Error("Supported formats: PDF, ZIP, DOCX, XLSX, or binary files.");
+      const allowed = new Set(["application/pdf", "application/zip", "application/x-zip-compressed", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]);
+      if (!allowed.has(file.type)) throw new Error("Supported formats: PDF, ZIP, DOCX, or XLSX.");
       if (file.size < 1 || file.size > 100 * 1024 * 1024) throw new Error("File must be between 1 byte and 100 MB.");
 
       const signedResponse = await fetch(`/api/admin/products/${product.id}/upload-url`, {

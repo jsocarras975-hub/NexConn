@@ -55,13 +55,13 @@ export function Turnstile({
       renderWidget();
     } else {
       const existing = document.querySelector(
-        'script[src="https://challenges.cloudflare.com/turnstile/v0/api.js"]',
+        'script[src="https://challenges.cloudflare.com/turnstile/api.js"]',
       ) as HTMLScriptElement | null;
       if (existing) {
         existing.addEventListener("load", renderWidget);
       } else {
         const script = document.createElement("script");
-        script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+        script.src = "https://challenges.cloudflare.com/turnstile/api.js";
         script.async = true;
         script.defer = true;
         script.onload = renderWidget;
