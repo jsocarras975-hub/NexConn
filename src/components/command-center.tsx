@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Activity, CheckCircle2, DollarSign, FileText, Inbox, LifeBuoy, ShoppingCart, Target, TrendingUp, Users, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, DollarSign, FileText, Inbox, LifeBuoy, ShoppingCart, Tag, Target, TrendingUp, Users, XCircle } from "lucide-react";
+import { CouponManager } from "@/components/coupon-manager";
 
 type RevenueRow = { currency: string; orderNetCents: number; invoicePaidCents: number; paidOrders: number; paidInvoices: number };
 type MonthlyRow = { month: string; currency: string; orderNetCents: number; invoicePaidCents: number; paidOrders: number; paidInvoices: number };
@@ -51,6 +52,15 @@ type Traffic = {
   topReferrers: { name: string; views: number }[];
   topCountries: { name: string; views: number }[];
 };
+type CouponRow = {
+  id: string; code: string; percentOff: number | null; amountOffCents: number | null;
+  currency: string; active: boolean; expiresAt: string | null;
+  maxRedemptions: number | null; timesRedeemed: number;
+};
+type CouponSummary = {
+  totalCoupons: number; activeCoupons: number; totalRedemptions: number;
+  discountByCurrency: { currency: string; discountCents: number; orders: number }[];
+};
 const money = (cents: number, currency: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
 const SEGMENT_LABEL: Record<string, string> = {
   ACTIVE: "Active",
@@ -93,6 +103,9 @@ export function CommandCenter() {
   const [healthError, setHealthError] = useState("");
   const [traffic, setTraffic] = useState<Traffic | null>(null);
   const [trafficError, setTrafficError] = useState("");
+  const [coupons, setCoupons] = useState<CouponRow[] | null>(null);
+  const [couponSummary, setCouponSummary] = useState<CouponSummary | null>(null);
+  const [couponsError, setCouponsError] = useState("");
   async function load() {
     setLoading(true); setError("");
     try {
@@ -115,6 +128,12 @@ export function CommandCenter() {
       .then((r) => { if (!r.ok) throw new Error("Traffic data failed to load."); return r.json(); })
       .then((b: Traffic) => setTraffic(b))
       .catch(() => setTrafficError("Traffic data failed to load."));
+  }, []);
+  useEffect(() => {
+    fetch("/api/admin/coupons", { cache: "no-store" })
+      .then((r) => { if (!r.ok) throw new Error("Coupons failed to load."); return r.json(); })
+      .then((b: { coupons: CouponRow[]; summary: CouponSummary }) => { setCoupons(b.coupons); setCouponSummary(b.summary); })
+      .catch(() => setCouponsError("Coupons failed to load."));
   }, []);
   if (loading) return <div className="card p-8 text-sm text-slate-400">Loading command center…</div>;
   if (error) return <div className="card p-8"><p role="alert" className="text-sm text-rose-300">{error}</p><button className="btn-secondary mt-4" onClick={() => void load()}>Try again</button></div>;
@@ -193,6 +212,35 @@ export function CommandCenter() {
           </div>
         </div>
         <p className="text-xs text-slate-500">First-party only — no cookies, no third-party tracker. IPs are stored only as a SHA-256 hash so unique visitors can be counted without keeping addresses. Admin, owner, portal, auth, and API routes are never counted. Tracking starts when this deploys; there is no backfill.</p>
+      </>}
+    </section>
+
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold">Promos &amp; coupons</h2>
+        <Link href="/admin/coupons" className="text-xs font-semibold text-cyan-300">Full coupons page →</Link>
+      </div>
+      {couponsError ? <p className="text-sm text-rose-300">{couponsError}</p>
+      : !coupons || !couponSummary ? <p className="text-sm text-slate-400">Loading coupons…</p>
+      : <>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Kpi icon={Tag} label="Active coupons" value={String(couponSummary.activeCoupons)} sub={`${couponSummary.totalCoupons} total codes`} />
+          <Kpi icon={CheckCircle2} label="Redemptions" value={couponSummary.totalRedemptions.toLocaleString()} sub="Across all coupons, all time" />
+          {(() => {
+            const row = couponSummary.discountByCurrency.find((r) => r.currency === k.currency) || couponSummary.discountByCurrency[0];
+            return <Kpi icon={DollarSign} label="Discount given" value={row ? money(row.discountCents, row.currency) : money(0, k.currency)} sub={row ? `${row.orders} paid order${row.orders === 1 ? "" : "s"} used a code` : "No coupon orders yet"} />;
+          })()}
+          {(() => {
+            const top = coupons.reduce<CouponRow | null>((best, c) => (best === null || c.timesRedeemed > best.timesRedeemed ? c : best), null);
+            return <Kpi icon={TrendingUp} label="Top coupon" value={top && top.timesRedeemed > 0 ? top.code : "—"} sub={top && top.timesRedeemed > 0 ? `${top.timesRedeemed} redemption${top.timesRedeemed === 1 ? "" : "s"}` : "No redemptions yet"} />;
+          })()}
+        </div>
+        <CouponManager initialCoupons={coupons.map((c) => ({
+          id: c.id, code: c.code, percentOff: c.percentOff, amountOffCents: c.amountOffCents,
+          currency: c.currency, active: c.active, expiresAt: c.expiresAt,
+          maxRedemptions: c.maxRedemptions, timesRedeemed: c.timesRedeemed,
+        }))} />
+        <p className="text-xs text-slate-500">Codes are created in Stripe as well, so the checkout price always matches. Deactivating a code stops new checkouts from using it right away; redemptions and discount totals count verified paid orders only.</p>
       </>}
     </section>
 

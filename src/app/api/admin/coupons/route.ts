@@ -11,7 +11,25 @@ export async function GET() {
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
   const coupons = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
-  return NextResponse.json({ coupons });
+  // Summary for dashboards (command center): how much discount coupons have
+  // actually given on verified-paid orders, grouped by currency.
+  const discountRows = await prisma.order.groupBy({
+    by: ["currency"],
+    where: { couponCode: { not: null }, paidAt: { not: null } },
+    _sum: { discountCents: true },
+    _count: { _all: true },
+  });
+  const summary = {
+    totalCoupons: coupons.length,
+    activeCoupons: coupons.filter((c) => c.active).length,
+    totalRedemptions: coupons.reduce((sum, c) => sum + c.timesRedeemed, 0),
+    discountByCurrency: discountRows.map((r) => ({
+      currency: r.currency,
+      discountCents: r._sum.discountCents ?? 0,
+      orders: r._count._all,
+    })),
+  };
+  return NextResponse.json({ coupons, summary });
 }
 
 const createSchema = z.object({
