@@ -534,6 +534,25 @@ export type JournalPost = {
 
 export const JOURNAL: JournalPost[] = [
 {
+    slug: "how-long-does-it-take-to-build-a-website",
+    title: "How long does it take to build a website, really?",
+    date: "2026-11-26",
+    readMin: 5,
+    category: "Studio / Process",
+    dek: "A landing page takes about a week, a full website about two. Here is what decides the date, and what slows it down.",
+    image: "/images/work-crete.jpg",
+    body: [
+      "How long does it take to build a website? If you ask around San Antonio, the answer you usually get is a shrug, or a range so wide it means nothing. Here is the honest version: a landing page takes about a week. A full custom website takes about two weeks. A site with real engineering behind it takes longer, and anyone who gives you a date before they have seen the work is guessing.",
+      "A landing page is one page with one job. It is the fastest thing we build, and it is fast because there is less to decide: one offer, one audience, one action. We design it, build it, write the copy with you, and wire up the form. That is about five to seven days from the day we start, and most of that time is you looking at it and telling us what to change. Our landing page is $150, final, and it is built so it can grow into a full site later instead of being thrown away. The reason it moves fast is that the decisions are small and the feedback loop is short: you see it, you react, we change it, and the next day it is done.",
+      "A full website is a different job. There are more pages, more copy, and more decisions: services, about, hours, contact, the pages Google finds when someone searches for what you do. We build a custom website in 14 days or less, start to finish. That is not a rush job. It is the pace you get when the design is custom but the process is settled. We know what we need from you, and we ask for it up front instead of discovering it in week three.",
+      "Web development is where the calendar stretches. If the site needs bookings, accounts, a store, an API, or one system talking to another, that is engineering, not design. Web development is $1,250, and the timeline depends on what it has to do. A booking form is days. A store with real products and payments is weeks. We will give you a date before we start, and we will not give you one before we understand the work. The other reason a bigger build takes longer is that it has to be tested like a tool, not looked at like a picture. A form that takes a booking has to take the booking every time, on a phone, on a slow connection, at midnight. That testing is part of the build, and it is the part you never see.",
+      "The thing that slows a build down is almost never the building. It is the waiting. Copy that nobody has written. Photos that live on someone's phone. A decision about the offer that keeps changing. A site that should take two weeks takes two months because the business is still deciding what it sells. The fastest builds we have done had one thing in common: the owner knew the offer before we started. It also helps to know who decides. If three people have to approve the copy, the build takes as long as the slowest approval, not as long as the work. One person who can say yes is worth more to a timeline than any tool we own.",
+      "So the way to get a straight answer is to bring a straight brief. What is the one thing the site has to do? Who is it for? What do they do next? If you can answer those three questions, we can give you a date, and we will hit it. If you cannot, that is fine too, but the first week of the build will be spent answering them. That is honest work, not wasted time, and it is better to do it at the start than to rebuild a finished site around a new answer.",
+      "Here is what to expect from us. We will tell you the price before we start, and it will not change: web design is $750, a landing page is $150, web development is $1,250. Managed site hosting is $19.99 a month once it is live, which covers the hosting, the certificate, the backups, and the updates. We build a standard site in 14 days or less. If something in your project needs more time, we will say so on day one, not day thirteen. And if you already have a site that is doing its job, you do not need a new one. A redesign makes sense when the site is costing you customers, not when you are bored of looking at it.",
+      "If you run a business in San Antonio or anywhere in South Texas and you have been putting a website off because you do not know how long it will take, the answer is simpler than you think. A page takes a week. A site takes two. The hard part is deciding what it should do, and that part is yours. Once you know, we can build it, and we can tell you the day it will be done.",
+    ],
+  },
+{
     slug: "landing-page-vs-website-san-antonio",
     title: "Landing page vs. website: which one does a San Antonio business need?",
     date: "2026-11-25",
