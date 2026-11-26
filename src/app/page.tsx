@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Bot, Boxes, Clock, Layers3, ShieldCheck, Sparkles, Store, UserRound, Workflow } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
-import { SERVICES, SERVICE_GROUPS, WORK, PIPELINE, TESTIMONIALS, STUDIO } from "@/data/studio";
+import { SERVICE_GROUPS, WORK, PIPELINE, TESTIMONIALS, STUDIO } from "@/data/studio";
+import { getServices } from "@/lib/services";
 import { pageMetadata } from "@/lib/seo";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = pageMetadata("/", "N3xUs Konc3pt'z — Web Design, Development & Hosting", "South Texas digital studio for custom websites, apps, Discord and Telegram bots, SEO, and managed hosting. Design, development, and deployment from one desk.");
 
 const featuredWork = WORK.filter((w) => ["elite-crete-systems-south-tx-web-platform", "nexus-moderation-bot", "wicked-smokes", "n3xus-konc3pt-z"].includes(w.slug));
 
-export default function Home() {
+export default async function Home() {
+  const services = await getServices();
   return <main>
     <section className="grid-glow relative overflow-hidden">
       <div className="pointer-events-none absolute -right-32 top-0 h-[560px] w-[560px] rounded-full bg-cyan-600/15 blur-[120px]" />
@@ -19,7 +23,7 @@ export default function Home() {
           <h1 className="max-w-3xl text-5xl font-semibold leading-[1.06] tracking-[-.045em] sm:text-6xl lg:text-[68px]">Design. Development. <span className="gradient-text">Deployment.</span></h1>
           <p className="mt-7 max-w-xl text-lg leading-8 text-slate-400">{STUDIO.name} — {STUDIO.founder}, South Texas. Sites, Discord and Telegram bots, hosting. Catalog runs $99 bots to $1,250 web development. One studio, three jobs, no handoff tax.</p>
           <div className="mt-9 flex flex-wrap gap-3"><Link href="/book" className="btn-primary">Open a brief <ArrowUpRight size={16} /></Link><Link href="/services" className="btn-secondary">Browse the catalog <ArrowRight size={15} /></Link></div>
-          <div className="mt-14 flex flex-wrap gap-x-8 gap-y-4 border-t border-white/10 pt-7 text-sm text-slate-300"><span><strong className="text-white">8</strong> <span className="text-slate-400">public systems</span></span><span><strong className="text-white">14</strong> <span className="text-slate-400">service lines</span></span><span><strong className="text-white">24h</strong> <span className="text-slate-400">first response</span></span></div>
+          <div className="mt-14 flex flex-wrap gap-x-8 gap-y-4 border-t border-white/10 pt-7 text-sm text-slate-300"><span><strong className="text-white">8</strong> <span className="text-slate-400">public systems</span></span><span><strong className="text-white">{services.length}</strong> <span className="text-slate-400">service lines</span></span><span><strong className="text-white">24h</strong> <span className="text-slate-400">first response</span></span></div>
         </div>
         <div className="relative mx-auto w-full max-w-[510px]">
           <div className="absolute -inset-8 rounded-[40px] bg-gradient-to-br from-cyan-500/20 to-cyan-400/10 blur-2xl" />
@@ -36,7 +40,7 @@ export default function Home() {
       </div>
     </section>
 
-    <section className="section"><div className="container"><SectionHeading eyebrow="Services" title="A catalog, not a mystery." description="Four groups, fourteen lines, every price on the page. Pick a line or open a brief and we scope it with you." /><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{SERVICE_GROUPS.map((g) => { const items = SERVICES.filter((s) => s.group === g.name); return <div key={g.name} className="card group p-6 transition hover:-translate-y-1 hover:border-cyan-300/30"><p className="eyebrow">{g.name}</p><h3 className="mt-4 text-lg font-semibold">{g.blurb}</h3><p className="mt-3 text-sm leading-6 text-slate-400">{items.map((s) => s.name).join(" · ")}</p><p className="mt-5 text-sm"><strong>{items.length} lines</strong> <span className="text-slate-500">· final prices on the page</span></p><Link href="/services" className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-cyan-300">See {items.length} lines <ArrowUpRight size={14} /></Link></div>; })}</div></div></section>
+    <section className="section"><div className="container"><SectionHeading eyebrow="Services" title="A catalog, not a mystery." description={`Four groups, ${services.length} lines, every price on the page. Pick a line or open a brief and we scope it with you.`} /><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{SERVICE_GROUPS.map((g) => { const items = services.filter((s) => s.group === g.name); return <div key={g.name} className="card group p-6 transition hover:-translate-y-1 hover:border-cyan-300/30"><p className="eyebrow">{g.name}</p><h3 className="mt-4 text-lg font-semibold">{g.blurb}</h3><p className="mt-3 text-sm leading-6 text-slate-400">{items.map((s) => s.name).join(" · ")}</p><p className="mt-5 text-sm"><strong>{items.length} lines</strong> <span className="text-slate-500">· final prices on the page</span></p><Link href="/services" className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-cyan-300">See {items.length} lines <ArrowUpRight size={14} /></Link></div>; })}</div></div></section>
 
     <section className="section border-y border-white/5 bg-[#0b1019]"><div className="container"><SectionHeading eyebrow="Work" title="Systems on the record." description="Real systems, real clients. No concept work, no placeholders." /><div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">{featuredWork.map((w) => <article key={w.slug} className="card overflow-hidden"><Link href={`/work/${w.slug}`} className="block">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={w.image} alt={w.title} className="aspect-[16/10] w-full object-cover" /><div className="p-5"><p className="eyebrow">{w.type} · {w.year}</p><h3 className="mt-2 text-base font-semibold leading-6">{w.title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{w.summary}</p></div></Link></article>)}</div><div className="mt-8"><Link href="/work" className="btn-secondary">All eight case studies <ArrowRight size={15} /></Link></div></div></section>
 

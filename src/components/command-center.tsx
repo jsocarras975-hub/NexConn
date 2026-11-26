@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Activity, CheckCircle2, DollarSign, FileText, Inbox, LifeBuoy, ShoppingCart, Tag, Target, TrendingUp, Users, XCircle } from "lucide-react";
 import { CouponManager } from "@/components/coupon-manager";
+import { ProductManager } from "@/components/product-manager";
+import { ServiceManager } from "@/components/service-manager";
+import { UserManager } from "@/components/user-manager";
 
 type RevenueRow = { currency: string; orderNetCents: number; invoicePaidCents: number; paidOrders: number; paidInvoices: number };
 type MonthlyRow = { month: string; currency: string; orderNetCents: number; invoicePaidCents: number; paidOrders: number; paidInvoices: number };
@@ -61,6 +64,10 @@ type CouponSummary = {
   totalCoupons: number; activeCoupons: number; totalRedemptions: number;
   discountByCurrency: { currency: string; discountCents: number; orders: number }[];
 };
+type AdminUserRow = {
+  id: string; name: string; email: string; role: string; disabled: boolean;
+  verified: boolean; joined: string; orders: number; projects: number; tickets: number;
+};
 const money = (cents: number, currency: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
 const SEGMENT_LABEL: Record<string, string> = {
   ACTIVE: "Active",
@@ -106,6 +113,9 @@ export function CommandCenter() {
   const [coupons, setCoupons] = useState<CouponRow[] | null>(null);
   const [couponSummary, setCouponSummary] = useState<CouponSummary | null>(null);
   const [couponsError, setCouponsError] = useState("");
+  const [adminUsers, setAdminUsers] = useState<AdminUserRow[] | null>(null);
+  const [adminCurrentUser, setAdminCurrentUser] = useState<{ id: string; role: string } | null>(null);
+  const [usersError, setUsersError] = useState("");
   async function load() {
     setLoading(true); setError("");
     try {
@@ -134,6 +144,12 @@ export function CommandCenter() {
       .then((r) => { if (!r.ok) throw new Error("Coupons failed to load."); return r.json(); })
       .then((b: { coupons: CouponRow[]; summary: CouponSummary }) => { setCoupons(b.coupons); setCouponSummary(b.summary); })
       .catch(() => setCouponsError("Coupons failed to load."));
+  }, []);
+  useEffect(() => {
+    fetch("/api/admin/users", { cache: "no-store" })
+      .then((r) => { if (!r.ok) throw new Error("Users failed to load."); return r.json(); })
+      .then((b: { users: AdminUserRow[]; currentUser: { id: string; role: string } }) => { setAdminUsers(b.users); setAdminCurrentUser(b.currentUser); })
+      .catch(() => setUsersError("Users failed to load."));
   }, []);
   if (loading) return <div className="card p-8 text-sm text-slate-400">Loading command center…</div>;
   if (error) return <div className="card p-8"><p role="alert" className="text-sm text-rose-300">{error}</p><button className="btn-secondary mt-4" onClick={() => void load()}>Try again</button></div>;
@@ -242,6 +258,32 @@ export function CommandCenter() {
         }))} />
         <p className="text-xs text-slate-500">Codes are created in Stripe as well, so the checkout price always matches. Deactivating a code stops new checkouts from using it right away; redemptions and discount totals count verified paid orders only.</p>
       </>}
+    </section>
+
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold">Users</h2>
+        <Link href="/admin/users" className="text-xs font-semibold text-cyan-300">Full users page →</Link>
+      </div>
+      {usersError ? <p className="text-sm text-rose-300">{usersError}</p>
+      : !adminUsers || !adminCurrentUser ? <p className="text-sm text-slate-400">Loading users…</p>
+      : <UserManager users={adminUsers} currentUserId={adminCurrentUser.id} currentUserRole={adminCurrentUser.role} />}
+    </section>
+
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold">Services</h2>
+        <Link href="/admin/services" className="text-xs font-semibold text-cyan-300">Full services page →</Link>
+      </div>
+      <ServiceManager />
+    </section>
+
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold">Products</h2>
+        <Link href="/admin/products" className="text-xs font-semibold text-cyan-300">Full products page →</Link>
+      </div>
+      <ProductManager />
     </section>
 
     <section className="grid gap-4 lg:grid-cols-3">

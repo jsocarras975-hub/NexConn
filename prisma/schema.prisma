@@ -160,6 +160,30 @@ model Coupon {
   @@index([active, expiresAt])
 }
 
+// The public service catalog. Until 2026-11-26 the catalog lived only as
+// the static SERVICES array in src/data/studio.ts; it now lives here so
+// the owner can add, edit, deactivate, and delete services from the admin
+// panel. src/lib/services.ts reads this table and falls back to the
+// static array when the table is empty or unreachable, so the marketing
+// pages can never be taken down by a catalog problem. `price` is the
+// display string exactly as shown ("$1,250", "$9.99/mo") — catalog prices
+// are final prices, never "starting at".
+model Service {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  group        String
+  price        String
+  pitch        String   @db.Text
+  deliverables String[]
+  sort         Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([active, sort])
+}
+
 // A Stripe subscription for a hosting plan, mirrored locally so the portal
 // can show plan and status without calling Stripe on every page load.
 model Subscription {

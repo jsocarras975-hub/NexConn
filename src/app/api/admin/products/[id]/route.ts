@@ -42,3 +42,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Product not found or slug already in use." }, { status: 404 });
   }
 }
+
+// Delete is refused once a product has been ordered: order items reference
+// the product and carry the store's sales history, so those products are
+// retired with Unpublish instead. A never-ordered product deletes fully —
+// bundle links and version rows cascade.
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+  const user = auth.user;
+
+  const { id } = await params;
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: { id: true, name: true, slug: true, _count: { select: { orderItems: true } } },
+  });
+  if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  if (product._count.orderItems > 0) {
+    return NextResponse.json({
+      error: `"${product.name}" has been ordered ${product._count.orderItems} time${product._count.orderItems === 1 ? "" : "s"} and can't be deleted — its sales history has to stay. Unpublish it instead.`,
+    }, { status: 409 });
+  }
+
+  await prisma.product.delete({ where: { id } });
+  await prisma.auditLog.create({
+    data: { actorId: user.id, action: "PRODUCT_DELETED", target: id, metadata: { slug: product.slug, name: product.name } },
+  });
+  return NextResponse.json({ ok: true });
+}

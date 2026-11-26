@@ -24,6 +24,21 @@ export function ProductManager() {
   const [versionHistory, setVersionHistory] = useState<{ id: string; version: string; changelog: string | null; createdAt: string }[]>([]);
   const [versionLabel, setVersionLabel] = useState("");
   const [changelog, setChangelog] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  async function remove(product: Product) {
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Product delete failed.");
+      setNotice(`"${product.name}" deleted.`);
+      setConfirmDeleteId(null);
+      if (editing === product.id) reset();
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "Product delete failed."); }
+    finally { setBusy(false); }
+  }
 
   async function load() {
     const response = await fetch("/api/admin/products", { cache: "no-store" });
@@ -176,6 +191,14 @@ export function ProductManager() {
               <button type="button" onClick={() => edit(product)} className="btn-secondary" disabled={busy || !!uploading}>Edit</button>
               <button type="button" onClick={() => void toggle(product, "featured")} className="btn-secondary" disabled={busy || !!uploading}>{product.featured ? "Unfeature" : "Feature"}</button>
               <button type="button" onClick={() => void toggle(product, "active")} className="btn-secondary" disabled={busy || !!uploading}>{product.active ? "Unpublish" : "Publish"}</button>
+              {confirmDeleteId === product.id ? (
+                <>
+                  <button type="button" onClick={() => void remove(product)} className="btn-secondary font-semibold text-rose-300" disabled={busy || !!uploading}>{busy ? "Deleting…" : "Confirm delete"}</button>
+                  <button type="button" onClick={() => setConfirmDeleteId(null)} className="btn-secondary" disabled={busy || !!uploading}>Cancel</button>
+                </>
+              ) : (
+                <button type="button" onClick={() => setConfirmDeleteId(product.id)} className="btn-secondary text-rose-300" disabled={busy || !!uploading}>Delete</button>
+              )}
               <button type="button" onClick={() => void openExtras(product)} className="btn-secondary" disabled={busy || !!uploading}>{expanded === product.id ? "Close extras" : "Bundle & versions"}</button>
               <label className="btn-secondary cursor-pointer">
                 {uploading === product.id ? "Uploading…" : "Attach file"}

@@ -1,5 +1,6 @@
-import { JOURNAL, SERVICES, WORK } from "@/data/studio";
+import { JOURNAL, WORK } from "@/data/studio";
 import { prisma } from "@/lib/prisma";
+import { getServices } from "@/lib/services";
 
 // Always build fresh from the data — never serve a cached sitemap, so a
 // new journal post (or any content change) shows up immediately.
@@ -46,9 +47,10 @@ export async function GET() {
     // unreachable; the static and journal entries still go out.
     products = [];
   }
+  const services = await getServices();
   const urls: Entry[] = [
     ...staticRoutes.map((u) => entry(u === "" ? "/" : u, u === "/journal" ? latestJournalDate : undefined)),
-    ...SERVICES.map((s) => entry(`/services/${s.slug}`)),
+    ...services.map((s) => entry(`/services/${s.slug}`)),
     ...WORK.map((w) => entry(`/work/${w.slug}`)),
     // Store products have no /store/[slug] page; their detail pages live in
     // the marketplace under the same slug.

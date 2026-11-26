@@ -4,12 +4,15 @@ import { notFound } from "next/navigation";
 import { SectionHeading } from "@/components/section-heading";
 import { SubscribeButton } from "@/components/subscribe-button";
 import { SERVICES } from "@/data/studio";
+import { getServiceBySlug, getServices } from "@/lib/services";
 import { pageMetadata } from "@/lib/seo";
 import { getPlanByServiceSlug } from "@/lib/plans";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const service = SERVICES.find((s) => s.slug === slug);
+  const service = await getServiceBySlug(slug);
   if (!service) return undefined;
   return pageMetadata(`/services/${slug}`, service.name, service.pitch);
 }
@@ -20,10 +23,10 @@ export function generateStaticParams() {
 
 export default async function ServiceDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const service = SERVICES.find((s) => s.slug === slug);
+  const service = await getServiceBySlug(slug);
   if (!service) notFound();
   const plan = getPlanByServiceSlug(slug);
-  const siblings = SERVICES.filter((s) => s.group === service.group && s.slug !== slug);
+  const siblings = (await getServices()).filter((s) => s.group === service.group && s.slug !== slug);
   return <main className="container section">
     <Link href="/services" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft size={15} /> All services</Link>
     <div className="mt-8"><SectionHeading eyebrow={`${service.group} · ${service.price}`} title={service.name} description={service.pitch} /></div>

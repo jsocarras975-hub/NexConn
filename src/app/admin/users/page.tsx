@@ -30,8 +30,8 @@ export default async function UsersPage() {
       <p className="eyebrow">Administration</p>
       <h1 className="mt-3 text-3xl font-semibold">Users.</h1>
       <p className="mt-2 mb-8 text-sm text-slate-400">
-        Every account on the site. Disable an account to cut off access (it also signs them out everywhere),
-        resend a verification email, or — owner only — change a role.
+        Every account on the site. Add accounts, disable one to cut off access (it also signs them out everywhere),
+        resend a verification email, change a role (owner only), or delete a history-free account.
       </p>
       <UserManager
         currentUserId={user.id}
