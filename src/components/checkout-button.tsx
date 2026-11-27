@@ -18,7 +18,7 @@ export function CheckoutButton({ productId }: { productId: string }) {
       });
       const data = await response.json();
       if (response.status === 401) {
-        router.push("/login?next=/marketplace");
+        router.push("/login?next=/store");
         return;
       }
       if (!response.ok) throw new Error(data.error || "Checkout could not be started.");

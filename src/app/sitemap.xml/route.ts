@@ -23,7 +23,6 @@ const staticRoutes = [
   "/book",
   "/contact",
   "/transmissions",
-  "/marketplace",
   // /cart is deliberately absent: robots.txt disallows it, and a sitemap
   // must not list URLs the crawler is told not to visit.
 ];
@@ -52,9 +51,8 @@ export async function GET() {
     ...staticRoutes.map((u) => entry(u === "" ? "/" : u, u === "/journal" ? latestJournalDate : undefined)),
     ...services.map((s) => entry(`/services/${s.slug}`)),
     ...WORK.map((w) => entry(`/work/${w.slug}`)),
-    // Store products have no /store/[slug] page; their detail pages live in
-    // the marketplace under the same slug.
-    ...products.map((p) => entry(`/marketplace/${p.slug}`, p.updatedAt.toISOString().slice(0, 10))),
+    // Product detail pages live in the store under the same slug.
+    ...products.map((p) => entry(`/store/${p.slug}`, p.updatedAt.toISOString().slice(0, 10))),
     ...JOURNAL.map((p) => entry(`/journal/${p.slug}`, p.date)),
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

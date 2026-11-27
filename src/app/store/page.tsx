@@ -32,6 +32,6 @@ export default async function Store() {
         {sellable(db) && db ? <AddToCartButton product={{ productId: db.id, slug: db.slug, name: db.name, priceCents: db.priceCents, currency: db.currency }} /> : <Link href="/contact" className="btn-secondary mt-5 w-full">Available soon — ask the studio <ArrowUpRight size={15} /></Link>}
       </article>;
     })}</div>
-    <p className="mt-8 text-xs leading-6 text-slate-500">Store products are sold through the marketplace checkout (Stripe, server-verified prices).</p>
+    <p className="mt-8 text-xs leading-6 text-slate-500">Store products are sold through the store checkout (Stripe, server-verified prices).</p>
   </main>;
 }

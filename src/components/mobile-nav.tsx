@@ -15,7 +15,6 @@ const links = [
   { href: "/store", label: "Store" },
   { href: "/lab", label: "Lab" },
   { href: "/journal", label: "Journal" },
-  { href: "/marketplace", label: "Marketplace" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];

@@ -31,7 +31,7 @@ export default async function PortalOrdersPage() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href="/portal/library" className="btn-primary">Open digital library</Link>
-        <Link href="/marketplace" className="btn-secondary">Browse marketplace</Link>
+        <Link href="/store" className="btn-secondary">Browse the store</Link>
       </div>
 
       <section className="card mt-8 overflow-hidden p-5 sm:p-7">
@@ -68,7 +68,7 @@ export default async function PortalOrdersPage() {
           <div className="py-12 text-center">
             <p className="font-semibold">No orders yet</p>
             <p className="mt-2 text-sm text-slate-400">Your completed purchases will appear here.</p>
-            <Link href="/marketplace" className="btn-primary mt-5">Explore the marketplace</Link>
+            <Link href="/store" className="btn-primary mt-5">Explore the store</Link>
           </div>
         )}
       </section>

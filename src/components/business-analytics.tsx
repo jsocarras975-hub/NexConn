@@ -43,12 +43,12 @@ export function BusinessAnalytics() {
   const currencies = [...new Set(data.monthly.map(row => row.currency))];
   return <div className="space-y-8">
     <section className="grid gap-4 sm:grid-cols-2">
-      <div className="card p-5"><p className="text-sm text-slate-400">Paid marketplace orders, 12 months</p><p className="mt-2 text-3xl font-semibold">{data.totals.paidOrders}</p></div>
+      <div className="card p-5"><p className="text-sm text-slate-400">Paid store orders, 12 months</p><p className="mt-2 text-3xl font-semibold">{data.totals.paidOrders}</p></div>
       <div className="card p-5"><p className="text-sm text-slate-400">Reporting window</p><p className="mt-2 text-lg font-semibold">{new Date(data.periodStart).toLocaleDateString()} – {new Date(data.periodEnd).toLocaleDateString()}</p></div>
     </section>
 
     <section className="space-y-3">
-      <h2 className="text-xl font-semibold">Monthly marketplace performance</h2>
+      <h2 className="text-xl font-semibold">Monthly store performance</h2>
       <p className="text-xs text-slate-500">Based on verified order paidAt timestamps. Refunds are subtracted from gross sales to calculate net order sales. Each currency is shown separately.</p>
       {currencies.length ? currencies.map(currency => {
         const rows = data.monthly.filter(row => row.currency === currency);
@@ -93,6 +93,6 @@ export function BusinessAnalytics() {
       </div>
     </section>
 
-    <p className="text-xs leading-6 text-slate-500">This report is limited to the latest {data.sourceLimit.orders.toLocaleString()} orders and {data.sourceLimit.orderItems.toLocaleString()} order items. Product totals are gross item sales and do not allocate order-level discounts or refunds to individual products. Customer value is limited to this 12-month window and marketplace orders only. Invoices are not included in these sales rankings.</p>
+    <p className="text-xs leading-6 text-slate-500">This report is limited to the latest {data.sourceLimit.orders.toLocaleString()} orders and {data.sourceLimit.orderItems.toLocaleString()} order items. Product totals are gross item sales and do not allocate order-level discounts or refunds to individual products. Customer value is limited to this 12-month window and store orders only. Invoices are not included in these sales rankings.</p>
   </div>;
 }

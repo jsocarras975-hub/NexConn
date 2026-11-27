@@ -163,7 +163,7 @@ export async function POST(req: Request) {
           };
         }),
         success_url: `${appUrl}/portal?checkout=success`,
-        cancel_url: `${appUrl}/marketplace?checkout=cancelled`,
+        cancel_url: `${appUrl}/store?checkout=cancelled`,
       }, {
         // Stable per-order key prevents duplicate Stripe sessions on safe retries.
         idempotencyKey: `n3xus-checkout-${orderId}`,

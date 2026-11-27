@@ -58,7 +58,7 @@ export default async function Portal() {
         <Link href="/portal/library" className="btn-secondary">Digital library ↗</Link>
         <Link href="/portal/support" className="btn-secondary">Open support center ↗</Link>
         <Link href="/portal/invoices" className="btn-secondary">View invoices ↗</Link>
-        <Link href="/marketplace" className="btn-secondary">Browse marketplace ↗</Link>
+        <Link href="/store" className="btn-secondary">Browse the store ↗</Link>
       </div>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">

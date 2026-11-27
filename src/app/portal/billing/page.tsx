@@ -45,7 +45,7 @@ export default async function PortalBillingPage() {
         <div>
           <p className="eyebrow">Client workspace</p>
           <h1 className="mt-3 text-3xl font-semibold">Billing & payment history</h1>
-          <p className="mt-2 text-sm text-slate-400">Your invoices and marketplace payment records, kept separate.</p>
+          <p className="mt-2 text-sm text-slate-400">Your invoices and store payment records, kept separate.</p>
         </div>
         <Link href="/portal" className="btn-secondary">Back to portal</Link>
       </div>
@@ -102,7 +102,7 @@ export default async function PortalBillingPage() {
       </section>
 
       <section className="mt-10 space-y-4">
-        <h2 className="text-xl font-semibold">Marketplace payments</h2>
+        <h2 className="text-xl font-semibold">Store payments</h2>
         <div className="card divide-y divide-white/10 p-5 sm:p-7">
           {orders.length ? orders.map((order) => (
             <article key={order.id} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
@@ -116,7 +116,7 @@ export default async function PortalBillingPage() {
                 <p className="mt-1 text-xs text-slate-400">{order.status}</p>
               </div>
             </article>
-          )) : <p className="py-6 text-sm text-slate-500">No completed marketplace payments yet.</p>}
+          )) : <p className="py-6 text-sm text-slate-500">No completed store payments yet.</p>}
         </div>
       </section>
       <p className="mt-5 text-xs leading-6 text-slate-500">Order dates show when the order was created, not a verified payment settlement timestamp. Invoice payment dates show the date recorded by N3xUs Konc3pt'z. For bank settlement confirmation, use your payment provider's records.</p>

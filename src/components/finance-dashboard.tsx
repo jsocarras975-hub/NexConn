@@ -38,7 +38,7 @@ export function FinanceDashboard() {
 
   return <div className="space-y-8">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-slate-400">Lifetime totals, separated by currency. Marketplace orders and service invoices are shown independently.</p>
+      <p className="text-sm text-slate-400">Lifetime totals, separated by currency. Store orders and service invoices are shown independently.</p>
       <div className="flex gap-2"><a className="btn-secondary" href="/api/admin/finance/export">Export CSV</a><button className="btn-secondary" onClick={() => void load()}>Refresh records</button></div>
     </div>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

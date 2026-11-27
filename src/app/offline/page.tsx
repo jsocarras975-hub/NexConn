@@ -18,8 +18,8 @@ export default function OfflinePage() {
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <OfflineRetry />
-        <Link href="/marketplace" className="btn-secondary">
-          Browse the marketplace
+        <Link href="/store" className="btn-secondary">
+          Browse the store
         </Link>
       </div>
       <p className="mt-8 flex items-center gap-2 text-xs text-slate-500">

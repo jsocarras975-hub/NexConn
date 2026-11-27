@@ -33,7 +33,6 @@ export async function SiteHeader() {
           <Link href="/store" className="hover:text-white">Store</Link>
           <Link href="/lab" className="hover:text-white">Lab</Link>
           <Link href="/journal" className="hover:text-white">Journal</Link>
-          <Link href="/marketplace" className="hover:text-white">Marketplace</Link>
           <Link href="/contact" className="hover:text-white">Contact</Link>
         </nav>
 

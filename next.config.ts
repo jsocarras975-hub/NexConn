@@ -48,6 +48,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   experimental: { serverActions: { bodySizeLimit: "5mb" } },
+  // The marketplace was retired on 2026-11-27 — the store is the only
+  // shop. Permanent redirects keep old links, bookmarks, and any printed
+  // or emailed URLs working.
+  async redirects() {
+    return [
+      { source: "/marketplace", destination: "/store", permanent: true },
+      { source: "/marketplace/:slug", destination: "/store/:slug", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

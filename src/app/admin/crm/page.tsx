@@ -54,14 +54,14 @@ export default async function CrmPage() {
 
   return <main className="container section">
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-      <div><p className="eyebrow">N3xUs Konc3pt'z / CUSTOMER RELATIONSHIP MANAGEMENT</p><h1 className="mt-3 text-3xl font-semibold">Customer relationships.</h1><p className="mt-2 text-sm text-slate-400">A consolidated view of customer accounts, marketplace activity and service invoices.</p></div>
+      <div><p className="eyebrow">N3xUs Konc3pt'z / CUSTOMER RELATIONSHIP MANAGEMENT</p><h1 className="mt-3 text-3xl font-semibold">Customer relationships.</h1><p className="mt-2 text-sm text-slate-400">A consolidated view of customer accounts, store activity and service invoices.</p></div>
       <Link href="/admin" className="btn-secondary">Admin home</Link>
     </div>
     <div className="mb-8"><CrmWorkspace /></div>
     <div className="mb-6 grid gap-4 sm:grid-cols-3">
       <div className="card p-5"><p className="text-sm text-slate-400">Customer accounts shown</p><p className="mt-2 text-3xl font-semibold">{customers.length}</p><p className="mt-1 text-xs text-slate-500">Most recent 100 client accounts</p></div>
-      <div className="card p-5"><p className="text-sm text-slate-400">Completed marketplace orders</p><p className="mt-2 text-3xl font-semibold">{orders.filter(o => ["PAID", "FULFILLED", "REFUNDED"].includes(o.status)).length}</p><p className="mt-1 text-xs text-slate-500">Across the displayed customers</p></div>
-      <div className="card p-5"><p className="text-sm text-slate-400">Open service invoices</p><p className="mt-2 text-3xl font-semibold">{invoices.filter(i => ["SENT", "OVERDUE"].includes(i.status)).length}</p><p className="mt-1 text-xs text-slate-500">Sent or overdue, not marketplace orders</p></div>
+      <div className="card p-5"><p className="text-sm text-slate-400">Completed store orders</p><p className="mt-2 text-3xl font-semibold">{orders.filter(o => ["PAID", "FULFILLED", "REFUNDED"].includes(o.status)).length}</p><p className="mt-1 text-xs text-slate-500">Across the displayed customers</p></div>
+      <div className="card p-5"><p className="text-sm text-slate-400">Open service invoices</p><p className="mt-2 text-3xl font-semibold">{invoices.filter(i => ["SENT", "OVERDUE"].includes(i.status)).length}</p><p className="mt-1 text-xs text-slate-500">Sent or overdue, not store orders</p></div>
     </div>
     <section className="card overflow-hidden">
       <div className="border-b border-white/10 p-5"><h2 className="font-semibold">Customer directory</h2><p className="mt-1 text-sm text-slate-400">Open a profile to review its available activity history.</p></div>
@@ -76,6 +76,6 @@ export default async function CrmPage() {
         })}
       </div>}
     </section>
-    <p className="mt-4 text-xs text-slate-500">Marketplace net totals are intentionally not combined with invoice totals. Monetary values remain separated by currency on customer profiles.</p>
+    <p className="mt-4 text-xs text-slate-500">Store net totals are intentionally not combined with invoice totals. Monetary values remain separated by currency on customer profiles.</p>
   </main>;
 }

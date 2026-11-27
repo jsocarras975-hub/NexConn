@@ -17,7 +17,7 @@
  * Old caches are deleted on activate.
  */
 
-const CACHE_VERSION = "nexcon-pwa-v2";
+const CACHE_VERSION = "nexcon-pwa-v3";
 const STATIC_CACHE = `nexcon-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `nexcon-pages-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -48,7 +48,7 @@ function isCacheableResponse(response: Response) {
 const PRECACHE_URLS = [
   "/",
   "/offline",
-  "/marketplace",
+  "/store",
   "/lab",
   "/about",
   "/services",

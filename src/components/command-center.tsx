@@ -172,7 +172,7 @@ export function CommandCenter() {
 
   return <div className="space-y-8">
     <p className="text-sm text-slate-400">
-      Verified paid revenue only — marketplace orders use the Stripe-verified payment date, invoices use their recorded payment date.
+      Verified paid revenue only — store orders use the Stripe-verified payment date, invoices use their recorded payment date.
       Orders and invoices are separate streams and are never combined into one total. Lifecycle segments are operational signals, not a churn model.
     </p>
 
@@ -302,7 +302,7 @@ export function CommandCenter() {
           </div>)}
         </div>
         <div className="mt-4 flex flex-wrap gap-5 text-xs text-slate-400">
-          <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-cyan-400" /> Marketplace orders (net)</span>
+          <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-cyan-400" /> Store orders (net)</span>
           <span className="flex items-center gap-2"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-slate-500" /> Paid service invoices</span>
         </div>
       </div>
@@ -367,7 +367,7 @@ export function CommandCenter() {
         <div className="card p-6">
           <div className="flex items-baseline justify-between gap-2"><h3 className="font-semibold">Top products by revenue</h3><Link href="/admin/products" className="text-xs font-semibold text-cyan-300">All products →</Link></div>
           {data.topProducts.length ? <ul className="mt-4 space-y-4">{data.topProducts.map((p, i) => <li key={`${p.productId}:${p.currency}`}>
-            <div className="flex items-baseline justify-between gap-3 text-sm"><p className="min-w-0 truncate"><span className="mr-2 font-semibold text-slate-500">#{i + 1}</span><Link href={`/marketplace/${p.slug}`} className="font-medium text-cyan-300">{p.name}</Link></p><span className="shrink-0 font-semibold tabular-nums">{money(p.revenueCents, p.currency)}</span></div>
+            <div className="flex items-baseline justify-between gap-3 text-sm"><p className="min-w-0 truncate"><span className="mr-2 font-semibold text-slate-500">#{i + 1}</span><Link href={`/store/${p.slug}`} className="font-medium text-cyan-300">{p.name}</Link></p><span className="shrink-0 font-semibold tabular-nums">{money(p.revenueCents, p.currency)}</span></div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-cyan-400" style={{ width: `${Math.max(4, (p.revenueCents / topMax) * 100)}%` }} /></div>
             <p className="mt-1.5 text-xs text-slate-500">{p.units} sold · {p.orders} paid order{p.orders === 1 ? "" : "s"} · last 12 months</p>
           </li>)}</ul> : <p className="mt-4 text-sm text-slate-500">No paid product sales in the last 12 months.</p>}
@@ -380,9 +380,9 @@ export function CommandCenter() {
       {data.revenueByCurrency.length ? data.revenueByCurrency.map(row => <div key={row.currency} className="card p-5">
         <h3 className="font-semibold">{row.currency}</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Amount label="Net marketplace orders" value={row.orderNetCents} currency={row.currency} sub={`${row.paidOrders} paid orders`} />
+          <Amount label="Net store orders" value={row.orderNetCents} currency={row.currency} sub={`${row.paidOrders} paid orders`} />
           <Amount label="Paid service invoices" value={row.invoicePaidCents} currency={row.currency} sub={`${row.paidInvoices} paid invoices`} />
-          <Amount label="Marketplace + invoices" value={row.orderNetCents + row.invoicePaidCents} currency={row.currency} sub="Shown together for reference only — separate streams" />
+          <Amount label="Store + invoices" value={row.orderNetCents + row.invoicePaidCents} currency={row.currency} sub="Shown together for reference only — separate streams" />
           <div><p className="text-lg font-semibold tabular-nums">{row.paidOrders + row.paidInvoices}</p><p className="mt-1 text-xs text-slate-500">Paid transactions</p></div>
         </div>
       </div>) : <div className="card p-6 text-sm text-slate-500">No verified paid revenue in the last 12 months. Orders without a verified payment date are excluded.</div>}

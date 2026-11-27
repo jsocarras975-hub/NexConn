@@ -128,7 +128,7 @@ export default async function PortalLibraryPage() {
         <section className="card mt-8 p-10 text-center">
           <p className="font-semibold">Your library is waiting</p>
           <p className="mt-2 text-sm text-slate-400">Digital purchases will appear here after payment is confirmed.</p>
-          <Link href="/marketplace" className="btn-primary mt-5">Explore the marketplace</Link>
+          <Link href="/store" className="btn-primary mt-5">Explore the store</Link>
         </section>
       )}
 

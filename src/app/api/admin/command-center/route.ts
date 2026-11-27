@@ -157,7 +157,7 @@ export async function GET() {
   }
 
   // --- Customer 360 lifecycle: most recent paid activity per customer ---
-  // Marketplace paidAt is preferred; order creation time is used only as a
+  // Store-order paidAt is preferred; order creation time is used only as a
   // fallback for lifecycle recency and is never counted as verified revenue.
   const lastActivity = new Map<string, Date>();
   const spendByCustomer = new Map<string, Map<string, number>>();

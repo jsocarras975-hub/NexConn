@@ -39,7 +39,7 @@ export default async function CrmCustomerPage({ params }: Props) {
   ]);
 
   const activity = [
-    ...orders.map(order => ({ id: `order-${order.id}`, type: "Marketplace order", label: order.status, date: order.paidAt ?? order.createdAt, detail: `${money(Math.max(0, order.totalCents - order.refundedCents), order.currency)} net`, note: order.paidAt ? "Verified payment date" : "Order creation date; payment date not verified" })),
+    ...orders.map(order => ({ id: `order-${order.id}`, type: "Store order", label: order.status, date: order.paidAt ?? order.createdAt, detail: `${money(Math.max(0, order.totalCents - order.refundedCents), order.currency)} net`, note: order.paidAt ? "Verified payment date" : "Order creation date; payment date not verified" })),
     ...invoices.map(invoice => ({ id: `invoice-${invoice.id}`, type: `Service invoice ${invoice.invoiceNumber}`, label: invoice.status, date: invoice.paidAt ?? invoice.createdAt, detail: money(invoice.totalCents, invoice.currency), note: invoice.paidAt ? "Invoice payment date" : invoice.dueAt ? `Due ${invoice.dueAt.toLocaleDateString()}` : "Invoice creation date" })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -50,12 +50,12 @@ export default async function CrmCustomerPage({ params }: Props) {
       <div className="flex gap-2"><Link href="/admin/crm" className="btn-secondary">Back to CRM</Link><Link href="/admin" className="btn-secondary">Admin home</Link></div>
     </div>
     <div className="mb-6 grid gap-4 sm:grid-cols-3">
-      <div className="card p-5"><p className="text-sm text-slate-400">Marketplace orders</p><p className="mt-2 text-3xl font-semibold">{orders.length}</p></div>
+      <div className="card p-5"><p className="text-sm text-slate-400">Store orders</p><p className="mt-2 text-3xl font-semibold">{orders.length}</p></div>
       <div className="card p-5"><p className="text-sm text-slate-400">Service invoices</p><p className="mt-2 text-3xl font-semibold">{invoices.length}</p></div>
       <div className="card p-5"><p className="text-sm text-slate-400">Currencies in activity</p><p className="mt-2 text-3xl font-semibold">{currencies.size}</p><p className="mt-1 text-xs text-slate-500">{[...currencies].join(", ") || "None yet"}</p></div>
     </div>
     <section className="card overflow-hidden">
-      <div className="border-b border-white/10 p-5"><h2 className="font-semibold">Customer activity timeline</h2><p className="mt-1 text-sm text-slate-400">Marketplace orders and service invoices are shown as separate records.</p></div>
+      <div className="border-b border-white/10 p-5"><h2 className="font-semibold">Customer activity timeline</h2><p className="mt-1 text-sm text-slate-400">Store orders and service invoices are shown as separate records.</p></div>
       {activity.length === 0 ? <p className="p-6 text-sm text-slate-400">No orders or invoices are recorded for this customer yet.</p> : <div className="divide-y divide-white/10">
         {activity.map(item => <div key={item.id} className="flex flex-wrap items-start justify-between gap-3 p-5">
           <div><p className="font-medium">{item.type}</p><p className="mt-1 text-sm text-slate-400">{item.label} · {item.note}</p></div>
