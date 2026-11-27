@@ -534,6 +534,25 @@ export type JournalPost = {
 
 export const JOURNAL: JournalPost[] = [
 {
+    slug: "custom-discord-bot-for-small-business",
+    title: "A custom Discord bot for a small business: what it actually does",
+    date: "2026-11-27",
+    readMin: 5,
+    category: "Discord / Bots",
+    dek: "It answers the same questions, takes orders, and keeps the server tidy. Here is what it does, what it does not do, and when it is worth $99.",
+    image: "/images/work-zenith.jpg",
+    body: [
+      "A custom Discord bot is a small program that lives in your Discord server and does the repetitive work your team does by hand: answering the same questions, taking orders, posting announcements, and keeping the place tidy. It is not a mascot, and it is not magic. It is a tool, and for a small business in San Antonio with customers already on Discord, it is often the cheapest hire you will ever make. It does not need a desk, a schedule, or a day off.",
+      "Here is what one actually does, day to day. A customer asks what time you close, and the bot answers before anyone on your staff has to type. Someone wants to order, and the bot takes the order, confirms it, and puts it where your team can see it. A new member joins, and the bot welcomes them and points them to the rules and the menu. You have a special on Friday, and the bot posts it to the right channel at the right time instead of you remembering to do it at 4 p.m. None of this is glamorous. All of it is time your people get back, and time is the one thing a small team never has enough of.",
+      "A bot also does the quiet work nobody notices until it stops. It can watch for spam links and remove them before your customers see them. It can give regulars a role and keep newcomers out of staff channels. It can log who did what, so when something goes wrong you are not guessing. If your server has more than a handful of people in it, that kind of housekeeping is the difference between a community and a mess, and it is the work nobody on your team wants to do at 10 p.m.",
+      "What a bot does not do matters just as much. It does not create a community. If nobody is talking in your server, a bot will not make them talk. It does not replace a person when a customer is upset or the order is wrong. It hands that conversation to a human, fast, instead of pretending it can fix it. And it does not know things you never told it. A bot answers from what you give it: your hours, your menu, your prices, your policies. If that information is wrong, the bot will be confidently wrong, which is worse than saying nothing at all.",
+      "So when does it make sense for a small business in South Texas? The test is simple: are your customers already on Discord? If you run a game shop, a cafe with regulars, a gym, a tattoo studio, or a restaurant with a following, and your customers already hang out in a server, a bot meets them where they are. If your customers are not on Discord and never will be, a bot is the wrong tool, and a website or a phone number is the right one. We will tell you that before we take your money, because a bot nobody uses is a waste of $99, and we would rather have you as a customer later than a refund now.",
+      "A custom Discord bot from us is $99, final. That is a bot built for your server and your rules, not a template with your name pasted on it. We build it with Discord.js, test it in a private server before it ever touches yours, and hand it over working. You also need somewhere for it to live. A bot has to be running to answer, and a bot on a laptop that goes to sleep is a bot that is down. Our managed bot hosting is $9.99 a month, and it keeps the bot online, updated, and watched. If you would rather host it yourself, we hand you the code and the runbook and you own it outright.",
+      "Before you hire anyone to build one, ask three questions. First, who owns the code: you, or the person who built it? Second, what happens when it goes down at 9 p.m. on a Saturday, and who fixes it? Third, can it grow: can it take orders today and bookings next month without being rebuilt from scratch? If the answers are vague, keep looking. A bot is a small piece of software, but it is still software, and the same rules apply. You should own it, someone should watch it, and it should be built to change.",
+      "Start with the job, not the bot. Write down the three things your staff repeats most in Discord: the question, the order, the announcement. That list is your bot. If the list is real, a custom Discord bot will pay for itself in a week of saved typing. If the list is empty, spend the money on something else. Either way, you will know before you spend it, and that is the whole point."
+    ],
+  },
+{
     slug: "how-long-does-it-take-to-build-a-website",
     title: "How long does it take to build a website, really?",
     date: "2026-11-26",
