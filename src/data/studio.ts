@@ -235,7 +235,7 @@ export const SERVICES: Service[] = [
     slug: "internet-marketing",
     name: "Internet Marketing",
     group: "Amplify",
-    price: "$250",
+    price: "$150",
     pitch:
       "Strategy, creative, and tracking in one loop. PPC, landing alignment, and conversion events so you can see what the spend did — not a vanity dashboard.",
     deliverables: [
