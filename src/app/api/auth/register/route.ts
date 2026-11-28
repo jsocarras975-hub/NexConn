@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validators";
@@ -6,6 +6,7 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 import { verifyCaptcha } from "@/lib/captcha";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { auditLog } from "@/lib/audit";
+import { notifyTelegram } from "@/lib/telegram";
 
 // Registration no longer signs the user in. The account is created
 // unverified and the user must confirm their email before login works.
@@ -77,6 +78,11 @@ export async function POST(req: Request) {
     });
     await sendVerificationEmail(user);
     await auditLog({ actorId: user.id, action: "ACCOUNT_REGISTERED", target: user.id, req });
+    // Instant owner alert via the studio Telegram bot (new accounts only;
+    // reclaims and already-registered addresses stay silent).
+    after(async () => {
+      await notifyTelegram(`👤 New account signup on N3xUsKonc3ptz.com\n${name} (${normalized})`);
+    });
     return NextResponse.json(
       {
         ok: true,

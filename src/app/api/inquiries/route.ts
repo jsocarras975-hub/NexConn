@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/email";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { runInquiryWorkflows } from "@/lib/crm-workflows";
 import { verifyCaptcha } from "@/lib/captcha";
+import { notifyTelegram } from "@/lib/telegram";
 
 export async function POST(req: Request) {
   const limit = await enforceRateLimit(req, {
@@ -33,6 +34,14 @@ export async function POST(req: Request) {
     const inquiry = await prisma.inquiry.create({ data: inquiryData });
     try { await runInquiryWorkflows(inquiry.id); }
     catch (error) { console.error("Inquiry CRM workflow failed", error); }
+
+    // Instant owner alert via the studio Telegram bot (no-op until the
+    // TELEGRAM_* env vars are set). after() so it never delays the response.
+    after(async () => {
+      await notifyTelegram(
+        `📩 New inquiry on N3xUsKonc3ptz.com\nService: ${parsed.data.service}\nFrom: ${parsed.data.name} (${parsed.data.email})\n${parsed.data.details}`,
+      );
+    });
 
     if (process.env.OWNER_EMAIL) {
       const safeName = parsed.data.name.replace(/[&<>"]/g, "");

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { sendInvoicePaidEmail, sendOrderReceiptEmail, sendRefundEmail, sendSubscriptionReceiptEmail, sendSubscriptionWelcomeEmail } from "@/lib/transactional-email";
 import { generateLicenseKey } from "@/lib/licenses";
 import { getPlan } from "@/lib/plans";
+import { formatMoney, notifyTelegram } from "@/lib/telegram";
 export const runtime = "nodejs";
 
 type Tx = Prisma.TransactionClient;
@@ -425,6 +426,60 @@ export async function POST(req: Request) {
           }
         } catch (error) {
           console.error("Post-webhook transactional email failed", error);
+        }
+      });
+      // Instant owner alerts via the studio Telegram bot, in the same
+      // post-commit window as the receipts (no-op until TELEGRAM_* env
+      // vars are set). A failed alert never affects the webhook result.
+      const tgNotice = refundNotice as {
+        orderId?: string; invoiceId?: string;
+        refundedCents: number; totalCents: number; currency: string;
+      } | null;
+      after(async () => {
+        try {
+          if (orderId) {
+            const order = await prisma.order.findUnique({
+              where: { id: orderId },
+              select: { totalCents: true, currency: true },
+            });
+            if (order) {
+              await notifyTelegram(
+                `💰 New order paid on N3xUsKonc3ptz.com — ${formatMoney(order.totalCents, order.currency)}`,
+              );
+            }
+          }
+          if (invoiceId) {
+            const invoice = await prisma.invoice.findUnique({
+              where: { id: invoiceId },
+              select: { totalCents: true, currency: true },
+            });
+            if (invoice) {
+              await notifyTelegram(
+                `🧾 Invoice paid on N3xUsKonc3ptz.com — ${formatMoney(invoice.totalCents, invoice.currency)}`,
+              );
+            }
+          }
+          if (tgNotice) {
+            await notifyTelegram(
+              `↩️ Refund on N3xUsKonc3ptz.com — ${formatMoney(tgNotice.refundedCents, tgNotice.currency)} refunded` +
+                (tgNotice.orderId ? ` on order ${tgNotice.orderId}` : ` on invoice ${tgNotice.invoiceId ?? ""}`),
+            );
+          }
+          if (welcome) {
+            const plan = getPlan(welcome.plan);
+            await notifyTelegram(
+              `🔁 New subscription on N3xUsKonc3ptz.com — ${plan?.name ?? welcome.plan}` +
+                (plan ? ` (${formatMoney(plan.priceCents, plan.currency)}/mo)` : ""),
+            );
+          }
+          if (receipt) {
+            const plan = getPlan(receipt.plan);
+            await notifyTelegram(
+              `🔁 Subscription payment on N3xUsKonc3ptz.com — ${plan?.name ?? receipt.plan}, ${formatMoney(receipt.amountCents, receipt.currency)}`,
+            );
+          }
+        } catch (error) {
+          console.error("Post-webhook Telegram alert failed", error);
         }
       });
     }
