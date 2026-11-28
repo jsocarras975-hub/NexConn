@@ -21,7 +21,7 @@ export default function About() {
         <h2 className="text-xl font-semibold">Why the studio exists</h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">N3xUs Konc3pt&apos;z started because the usual split fails: a designer who never deploys, an engineer who inherits a moodboard, a host nobody owns. We take the 3 D&apos;s as one job — design, development, and deployment — from one desk in South Texas.</p>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">In scope: ecommerce storefronts, contractor platforms, native Android apps, Discord.js bots with a real ledger, Telegram shop desks, CRMs, APIs. Out of scope: native iOS, print, running someone else&apos;s paid-media spend.</p>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">You start with a four-question brief. Catalog prices today: web design $375, web development $625, a custom Discord or Telegram bot $49.50, managed site hosting $19.99/mo. We reply within one weekday. If we are the wrong studio, we say so.</p>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">You start with a four-question brief. Catalog prices today: web design $375, web development $675, a custom Discord or Telegram bot $50, managed site hosting $19.99/mo. We reply within one weekday. If we are the wrong studio, we say so.</p>
         <h2 className="mt-10 text-xl font-semibold">How we decide</h2>
         <div className="mt-5 grid gap-4">{PRINCIPLES.map((p) => <div key={p.n} className="card p-6"><p className="text-xs font-bold text-cyan-300">{p.n}</p><h3 className="mt-2 font-semibold">{p.title}</h3><p className="mt-2 text-sm leading-7 text-slate-400">{p.body}</p></div>)}</div>
       </div>

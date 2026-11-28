@@ -43,7 +43,7 @@ export const SERVICES: Service[] = [
     slug: "web-development",
     name: "Web Development",
     group: "Build",
-    price: "$625",
+    price: "$675",
     pitch:
       "Full-stack engineering for products that have to ship, scale, and stay maintainable. React and Node on the surface; Postgres, auth, and APIs underneath. We design the architecture before we write the first route.",
     deliverables: [
@@ -75,7 +75,7 @@ export const SERVICES: Service[] = [
     slug: "responsive-web-design",
     name: "Responsive Web Design",
     group: "Build",
-    price: "$250",
+    price: "$500",
     pitch:
       "Reflow, not shrink. We rebuild layouts so type, hit targets, and media behave at 390px first, then up. Cross-browser checks included — Safari, Chrome, Firefox.",
     deliverables: [
@@ -91,7 +91,7 @@ export const SERVICES: Service[] = [
     slug: "landing-page",
     name: "Landing Page",
     group: "Build",
-    price: "$75",
+    price: "$150",
     pitch:
       "A single, tightly written surface with a clear offer, proof, and a form that actually submits. Copy, layout, and tracking in one pass — no carousel of distractions.",
     deliverables: [
@@ -107,7 +107,7 @@ export const SERVICES: Service[] = [
     slug: "website-work",
     name: "Website Work",
     group: "Build",
-    price: "$50",
+    price: "$100",
     pitch:
       "A scoped block of engineering time for sites that are already live. Security updates, content swaps, speed work, or the thing you've been ignoring. Unused time does not roll — we use the three hours.",
     deliverables: [
@@ -139,7 +139,7 @@ export const SERVICES: Service[] = [
     slug: "native-android-app-development",
     name: "Native Android App Development",
     group: "Build",
-    price: "$150",
+    price: "$300",
     pitch:
       "A real native app for your business — not a website in a wrapper. Ordering, booking, loyalty, or a tool your crew actually uses, built with the Android SDK and signed, ready to install. This is the same bench that built SuperFiles and RemotePhone.",
     deliverables: [
@@ -155,7 +155,7 @@ export const SERVICES: Service[] = [
     slug: "discord-bots",
     name: "Custom Discord Bots",
     group: "Automate",
-    price: "$49.50",
+    price: "$50",
     pitch:
       "A bot is a product. We spec commands, permissions, and failure modes, then ship Discord.js with a real database. Optional AI for support or onboarding. Hosting is separate if you want us to run it.",
     deliverables: [
@@ -171,7 +171,7 @@ export const SERVICES: Service[] = [
     slug: "telegram-bots",
     name: "Custom Telegram Bots",
     group: "Automate",
-    price: "$49.50",
+    price: "$50",
     pitch:
       "Telegram is where a lot of communities and shops actually live. We build bots that manage groups, take payments, and talk to your other systems — without the 3 a.m. 'bot is down' message.",
     deliverables: [
@@ -235,7 +235,7 @@ export const SERVICES: Service[] = [
     slug: "internet-marketing",
     name: "Internet Marketing",
     group: "Amplify",
-    price: "$125",
+    price: "$250",
     pitch:
       "Strategy, creative, and tracking in one loop. PPC, landing alignment, and conversion events so you can see what the spend did — not a vanity dashboard.",
     deliverables: [
@@ -251,7 +251,7 @@ export const SERVICES: Service[] = [
     slug: "social-media-marketing",
     name: "Social Media Marketing",
     group: "Amplify",
-    price: "$125",
+    price: "$250",
     pitch:
       "We pick the two surfaces that matter, write a month of posts, and set the measurement. Discord and Telegram-native if that is where your people are — not a generic grid.",
     deliverables: [
@@ -267,7 +267,7 @@ export const SERVICES: Service[] = [
     slug: "photography-videography",
     name: "Photography & Videography",
     group: "Amplify",
-    price: "$200",
+    price: "$150",
     pitch:
       "Product, space, and team coverage with a post pipeline. We shoot for the layouts we already designed so crops, contrast, and color actually fit.",
     deliverables: [
@@ -769,12 +769,12 @@ export const PIPELINE = [
   {
     n: "02",
     title: "Design",
-    body: "Tokens, type, key pages at 390px first. You get screens you can reject — not a moodboard. Web design in the catalog is $375; a single landing page is $75.",
+    body: "Tokens, type, key pages at 390px first. You get screens you can reject — not a moodboard. Web design in the catalog is $375; a single landing page is $150.",
   },
   {
     n: "03",
     title: "Engineering",
-    body: "React, Node, Postgres unless the job says otherwise. Discord.js or Telegram Bot API when it is a bot. Staging URL, migrations, auth. Web development is $625; a custom bot is $49.50.",
+    body: "React, Node, Postgres unless the job says otherwise. Discord.js or Telegram Bot API when it is a bot. Staging URL, migrations, auth. Web development is $675; a custom bot is $50.",
   },
   {
     n: "04",
@@ -880,7 +880,7 @@ export const FAQS = [
   },
   {
     q: "Are these prices final?",
-    a: "Yes — these are final prices, not starting points. Web design $375, web development $625, custom Discord or Telegram bot $49.50, landing page $75, managed site hosting $19.99/mo. Custom auth, data migrations, or a second language are scoped on top as separate line items — never a surprise invoice for the listed job.",
+    a: "Yes — these are final prices, not starting points. Web design $375, web development $675, custom Discord or Telegram bot $50, landing page $150, managed site hosting $19.99/mo. Custom auth, data migrations, or a second language are scoped on top as separate line items — never a surprise invoice for the listed job.",
   },
   {
     q: "Where are you?",
