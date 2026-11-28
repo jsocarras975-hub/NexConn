@@ -43,7 +43,7 @@ export const SERVICES: Service[] = [
     slug: "web-development",
     name: "Web Development",
     group: "Build",
-    price: "$1,250",
+    price: "$625",
     pitch:
       "Full-stack engineering for products that have to ship, scale, and stay maintainable. React and Node on the surface; Postgres, auth, and APIs underneath. We design the architecture before we write the first route.",
     deliverables: [
@@ -59,7 +59,7 @@ export const SERVICES: Service[] = [
     slug: "web-design",
     name: "Web Design",
     group: "Build",
-    price: "$750",
+    price: "$375",
     pitch:
       "Interface design with the restraint of print and the precision of product. We start with type, surface, and a single accent — then build pages that convert without looking like every other agency site.",
     deliverables: [
@@ -75,7 +75,7 @@ export const SERVICES: Service[] = [
     slug: "responsive-web-design",
     name: "Responsive Web Design",
     group: "Build",
-    price: "$500",
+    price: "$250",
     pitch:
       "Reflow, not shrink. We rebuild layouts so type, hit targets, and media behave at 390px first, then up. Cross-browser checks included — Safari, Chrome, Firefox.",
     deliverables: [
@@ -91,7 +91,7 @@ export const SERVICES: Service[] = [
     slug: "landing-page",
     name: "Landing Page",
     group: "Build",
-    price: "$150",
+    price: "$75",
     pitch:
       "A single, tightly written surface with a clear offer, proof, and a form that actually submits. Copy, layout, and tracking in one pass — no carousel of distractions.",
     deliverables: [
@@ -107,7 +107,7 @@ export const SERVICES: Service[] = [
     slug: "website-work",
     name: "Website Work",
     group: "Build",
-    price: "$100",
+    price: "$50",
     pitch:
       "A scoped block of engineering time for sites that are already live. Security updates, content swaps, speed work, or the thing you've been ignoring. Unused time does not roll — we use the three hours.",
     deliverables: [
@@ -123,7 +123,7 @@ export const SERVICES: Service[] = [
     slug: "api-development",
     name: "API Development",
     group: "Build",
-    price: "$200",
+    price: "$100",
     pitch:
       "Contracts first: resources, auth, rate limits, errors. Then implementation with tests and docs so the next engineer — including future-you — does not have to reverse-engineer a black box.",
     deliverables: [
@@ -139,7 +139,7 @@ export const SERVICES: Service[] = [
     slug: "native-android-app-development",
     name: "Native Android App Development",
     group: "Build",
-    price: "$300",
+    price: "$150",
     pitch:
       "A real native app for your business — not a website in a wrapper. Ordering, booking, loyalty, or a tool your crew actually uses, built with the Android SDK and signed, ready to install. This is the same bench that built SuperFiles and RemotePhone.",
     deliverables: [
@@ -155,7 +155,7 @@ export const SERVICES: Service[] = [
     slug: "discord-bots",
     name: "Custom Discord Bots",
     group: "Automate",
-    price: "$99",
+    price: "$49.50",
     pitch:
       "A bot is a product. We spec commands, permissions, and failure modes, then ship Discord.js with a real database. Optional AI for support or onboarding. Hosting is separate if you want us to run it.",
     deliverables: [
@@ -171,7 +171,7 @@ export const SERVICES: Service[] = [
     slug: "telegram-bots",
     name: "Custom Telegram Bots",
     group: "Automate",
-    price: "$99",
+    price: "$49.50",
     pitch:
       "Telegram is where a lot of communities and shops actually live. We build bots that manage groups, take payments, and talk to your other systems — without the 3 a.m. 'bot is down' message.",
     deliverables: [
@@ -187,7 +187,7 @@ export const SERVICES: Service[] = [
     slug: "premium-managed-bot-hosting",
     name: "Managed Bot Hosting",
     group: "Host",
-    price: "$9.99/mo",
+    price: "$5/mo",
     pitch:
       "Bots are not websites. They need a persistent socket, isolated RAM, and a process supervisor that comes back up without you. We run Discord and Telegram workloads on dedicated resources with token-safe config and daily state backups.",
     deliverables: [
@@ -203,7 +203,7 @@ export const SERVICES: Service[] = [
     slug: "premium-managed-cloud-hosting",
     name: "Managed Cloud Hosting",
     group: "Host",
-    price: "$19.99/mo",
+    price: "$10/mo",
     pitch:
       "We take the box, the TLS, the backups, and the updates. Global CDN in front, daily snapshots behind, firewall and patch cadence in between. Built for the sites and apps we design — or for ones you already have.",
     deliverables: [
@@ -219,7 +219,7 @@ export const SERVICES: Service[] = [
     slug: "seo",
     name: "Search Engine Optimization",
     group: "Amplify",
-    price: "$300",
+    price: "$150",
     pitch:
       "Crawl health, titles, internals, and a keyword map tied to pages you can ship. We do not sell a thousand backlinks. We make the site make sense to Google and to the person who lands.",
     deliverables: [
@@ -235,7 +235,7 @@ export const SERVICES: Service[] = [
     slug: "internet-marketing",
     name: "Internet Marketing",
     group: "Amplify",
-    price: "$250",
+    price: "$125",
     pitch:
       "Strategy, creative, and tracking in one loop. PPC, landing alignment, and conversion events so you can see what the spend did — not a vanity dashboard.",
     deliverables: [
@@ -251,7 +251,7 @@ export const SERVICES: Service[] = [
     slug: "social-media-marketing",
     name: "Social Media Marketing",
     group: "Amplify",
-    price: "$250",
+    price: "$125",
     pitch:
       "We pick the two surfaces that matter, write a month of posts, and set the measurement. Discord and Telegram-native if that is where your people are — not a generic grid.",
     deliverables: [
@@ -267,7 +267,7 @@ export const SERVICES: Service[] = [
     slug: "photography-videography",
     name: "Photography & Videography",
     group: "Amplify",
-    price: "$400",
+    price: "$200",
     pitch:
       "Product, space, and team coverage with a post pipeline. We shoot for the layouts we already designed so crops, contrast, and color actually fit.",
     deliverables: [
@@ -463,7 +463,7 @@ export const STORE_PRODUCTS: StoreProduct[] = [
   {
     slug: "advanced-discord-economy-bot-template",
     name: "Discord Economy Bot Template",
-    priceCents: 4999,
+    priceCents: 2499,
     stack: "Discord.js · PostgreSQL · Node",
     summary:
       "The same Postgres-backed pattern we use on client servers, stripped of private branding. Slash commands, a currency with sinks, inventory, and a moderation-safe admin surface. You bring the token and the rules.",
@@ -478,7 +478,7 @@ export const STORE_PRODUCTS: StoreProduct[] = [
   {
     slug: "cyberpunk-ui-component-kit-react",
     name: "Terminal UI Kit — React",
-    priceCents: 2999,
+    priceCents: 1499,
     stack: "React · Tailwind · TypeScript",
     summary:
       "The component language of this studio, packaged. IBM Plex, hairline borders, concentric radii, signal green used once. Buttons, inputs, tabs, data rows, and a command palette shell.",
@@ -493,7 +493,7 @@ export const STORE_PRODUCTS: StoreProduct[] = [
   {
     slug: "telegram-auto-responder-script",
     name: "Telegram Auto-Responder",
-    priceCents: 1999,
+    priceCents: 999,
     stack: "Node · Telegram Bot API",
     summary:
       "A focused script for shops and community desks that need a reliable first reply, a button menu, and a path to a human. Logging included. Extend it or leave it alone.",
@@ -508,7 +508,7 @@ export const STORE_PRODUCTS: StoreProduct[] = [
   {
     slug: "n3xus-premium-dark-mode-css-theme",
     name: "N3xUs Dark CSS Theme",
-    priceCents: 999,
+    priceCents: 499,
     stack: "CSS",
     summary:
       "A CSS-only theme for sites that need to go dark without a redesign. Near-black, bone type, sage signal. Works as a starting layer on top of a classless or lightly classed document.",
@@ -769,17 +769,17 @@ export const PIPELINE = [
   {
     n: "02",
     title: "Design",
-    body: "Tokens, type, key pages at 390px first. You get screens you can reject — not a moodboard. Web design in the catalog is $750; a single landing page is $150.",
+    body: "Tokens, type, key pages at 390px first. You get screens you can reject — not a moodboard. Web design in the catalog is $375; a single landing page is $75.",
   },
   {
     n: "03",
     title: "Engineering",
-    body: "React, Node, Postgres unless the job says otherwise. Discord.js or Telegram Bot API when it is a bot. Staging URL, migrations, auth. Web development is $1,250; a custom bot is $99.",
+    body: "React, Node, Postgres unless the job says otherwise. Discord.js or Telegram Bot API when it is a bot. Staging URL, migrations, auth. Web development is $625; a custom bot is $49.50.",
   },
   {
     n: "04",
     title: "Deploy",
-    body: "TLS, backups, first week of traffic covered. Site hosting $19.99/mo, bot hosting $9.99/mo, or we hand you the repo and the runbook. We do not disappear on launch day.",
+    body: "TLS, backups, first week of traffic covered. Site hosting $10/mo, bot hosting $5/mo, or we hand you the repo and the runbook. We do not disappear on launch day.",
   },
 ];
 
@@ -798,7 +798,7 @@ export const BILLING = [
   {
     title: "Retainer",
     tag: "Monthly",
-    body: "Hosting, bots, and a block of hours after launch. Catalog hosting is $19.99/mo for sites, $9.99/mo for bots; retainers add a named hour block.",
+    body: "Hosting, bots, and a block of hours after launch. Catalog hosting is $10/mo for sites, $5/mo for bots; retainers add a named hour block.",
     includes: [
       "Managed cloud or bot hosting",
       "Scheduled updates",
@@ -876,11 +876,11 @@ export const FAQS = [
   },
   {
     q: "Do you take equity or revenue share?",
-    a: "No. Cash for work. Hosting and retainers are monthly. Digital goods (Discord Economy Bot Template $49.99, UI kit $29.99) are a one-production license, not a partnership.",
+    a: "No. Cash for work. Hosting and retainers are monthly. Digital goods (Discord Economy Bot Template $24.99, UI kit $14.99) are a one-production license, not a partnership.",
   },
   {
     q: "Are these prices final?",
-    a: "Yes — these are final prices, not starting points. Web design $750, web development $1,250, custom Discord or Telegram bot $99, landing page $150, managed site hosting $19.99/mo. Custom auth, data migrations, or a second language are scoped on top as separate line items — never a surprise invoice for the listed job.",
+    a: "Yes — these are final prices, not starting points. Web design $375, web development $625, custom Discord or Telegram bot $49.50, landing page $75, managed site hosting $10/mo. Custom auth, data migrations, or a second language are scoped on top as separate line items — never a surprise invoice for the listed job.",
   },
   {
     q: "Where are you?",

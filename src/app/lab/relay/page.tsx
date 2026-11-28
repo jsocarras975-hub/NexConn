@@ -13,7 +13,7 @@ function reply(input: string): string {
   if (/\b(hour|open|close|when|desk)\b/.test(t))
     return `The desk is on ${STUDIO.hours}, ${STUDIO.timezone}. First reply within 24h on weekdays.`;
   if (/\b(price|cost|much|rate|pricing)\b/.test(t))
-    return "Catalog prices: web design $750, web development $1,250, a custom Discord or Telegram bot $99, landing page $150, site hosting $19.99/mo, bot hosting $9.99/mo. Full catalog on /services.";
+    return "Catalog prices: web design $375, web development $625, a custom Discord or Telegram bot $49.50, landing page $75, site hosting $10/mo, bot hosting $5/mo. Full catalog on /services.";
   if (/\b(service|menu|offer|what.*(do|sell)|bot|website|hosting|seo)\b/.test(t))
     return "We do four groups: Build (sites, apps, APIs), Automate (Discord & Telegram bots), Host (managed site and bot hosting), Amplify (SEO, marketing, photo/video). Which lane are you after?";
   if (/\b(human|juan|talk|brief|start|hire|project)\b/.test(t))
@@ -56,7 +56,7 @@ export default function Relay() {
       </div>
       <aside className="space-y-5">
         <div className="card p-6"><p className="text-sm font-semibold">Intents</p><ul className="mt-3 space-y-2 text-sm text-slate-400"><li>• <strong className="text-slate-200">Hours</strong> — when the desk is on</li><li>• <strong className="text-slate-200">Menu</strong> — what the studio sells</li><li>• <strong className="text-slate-200">Human</strong> — handoff to a brief</li></ul></div>
-        <div className="card p-6"><p className="text-sm font-semibold">Ships as</p><p className="mt-2 text-sm leading-6 text-slate-400">The Telegram Auto-Responder in the <Link href="/store" className="text-cyan-300">store</Link> — $19.99, same brain.</p><Link href="/store" className="btn-secondary mt-4 w-full">Get the script</Link></div>
+        <div className="card p-6"><p className="text-sm font-semibold">Ships as</p><p className="mt-2 text-sm leading-6 text-slate-400">The Telegram Auto-Responder in the <Link href="/store" className="text-cyan-300">store</Link> — $9.99, same brain.</p><Link href="/store" className="btn-secondary mt-4 w-full">Get the script</Link></div>
         <Link href="/book" className="btn-primary w-full">Talk to a human — open a brief</Link>
       </aside>
     </div>

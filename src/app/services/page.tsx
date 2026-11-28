@@ -5,7 +5,7 @@ import { SERVICE_GROUPS } from "@/data/studio";
 import { getServices } from "@/lib/services";
 import { pageMetadata } from "@/lib/seo";
 
-export const metadata = pageMetadata("/services", "Services", "Final catalog prices, no starting-at games. Web design $750, web development $1,250, landing page $150, custom bots $99, hosting from $19.99/mo.");
+export const metadata = pageMetadata("/services", "Services", "Final catalog prices, no starting-at games. Web design $375, web development $625, landing page $75, custom bots $49.50, hosting from $10/mo.");
 
 export const dynamic = "force-dynamic";
 
