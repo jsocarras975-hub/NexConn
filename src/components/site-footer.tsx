@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Star } from "lucide-react";
+import { ArrowUpRight, Facebook, MessageCircle, Send, Star } from "lucide-react";
 import { STUDIO } from "@/data/studio";
 import { getBusinessSetting } from "@/lib/settings";
 export async function SiteFooter() {
@@ -13,7 +13,7 @@ export async function SiteFooter() {
    <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Explore</p><div className="grid gap-3 text-sm text-slate-400"><Link href="/services">Services</Link><Link href="/work">Work</Link><Link href="/store">Store</Link><Link href="/lab">Lab</Link><Link href="/journal">Journal</Link></div></div>
    <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Studio</p><div className="grid gap-3 text-sm text-slate-400"><Link href="/about">About</Link><Link href="/studio">How the desk runs</Link><Link href="/transmissions">Transmissions</Link><Link href="/book">Open a brief</Link><Link href="/contact">Contact</Link><Link href="/rss.xml">RSS</Link></div></div>
    <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Legal</p><div className="grid gap-3 text-sm text-slate-400"><Link href="/privacy">Privacy Policy</Link><Link href="/terms">Terms of Service</Link><Link href="/refund">Refund Policy</Link></div></div>
-   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Reach the desk</p><div className="grid gap-3 text-sm text-slate-400"><a href={`mailto:${primaryEmail}`}>{primaryEmail}</a><a href={`mailto:${STUDIO.emailJuan}`}>{STUDIO.emailJuan}</a><a href={STUDIO.phoneHref}>{STUDIO.phone}</a><span>First reply within 24h on weekdays</span></div><Link href="/book" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300">Open a brief <ArrowUpRight size={15}/></Link></div>
+   <div><p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-200">Reach the desk</p><div className="grid gap-3 text-sm text-slate-400"><a href={`mailto:${primaryEmail}`}>{primaryEmail}</a><a href={`mailto:${STUDIO.emailJuan}`}>{STUDIO.emailJuan}</a><a href={STUDIO.phoneHref}>{STUDIO.phone}</a><a href={STUDIO.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2"><MessageCircle size={15}/> WhatsApp</a><a href={STUDIO.telegram} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2"><Send size={15}/> Telegram</a><a href={STUDIO.facebook} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2"><Facebook size={15}/> Facebook</a><span>First reply within 24h on weekdays</span></div><Link href="/book" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-cyan-300">Open a brief <ArrowUpRight size={15}/></Link></div>
   </div>
   <div className="container flex flex-col justify-between gap-3 border-t border-white/10 py-5 text-xs text-slate-500 sm:flex-row"><span>© {new Date().getFullYear()} {STUDIO.name}. All rights reserved.</span><span>Design. Development. Deployment.</span></div>
  </footer>;

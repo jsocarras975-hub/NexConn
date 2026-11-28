@@ -54,6 +54,9 @@ export default function Contact() {
               <li><a href="mailto:studio@n3xuskonc3ptz.com" className="text-cyan-300">studio@n3xuskonc3ptz.com</a> — Juan answers it himself</li>
               <li><a href="mailto:j.socarras@n3xuskonc3ptz.com" className="text-cyan-300">j.socarras@n3xuskonc3ptz.com</a></li>
               <li><a href="tel:+12102751837" className="text-cyan-300">210-275-1837</a></li>
+              <li><a href="https://wa.me/12102751837" target="_blank" rel="noopener noreferrer" className="text-cyan-300">WhatsApp</a> — message the desk</li>
+              <li><a href="https://m.me/61597111826579" target="_blank" rel="noopener noreferrer" className="text-cyan-300">Facebook Messenger</a> — message the Page</li>
+              <li><a href="https://t.me/N3xUsKonc3ptzOfficial" target="_blank" rel="noopener noreferrer" className="text-cyan-300">Telegram channel</a> — news, tips & offers</li>
               <li>Desk Mon–Fri 09:00–18:00, America/Chicago · first reply within 24h on weekdays</li>
             </ul>
           </div>
