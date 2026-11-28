@@ -163,7 +163,7 @@ export function ServiceManager() {
             </select>
           </label>
           <label className="block text-sm">Price (as shown)
-            <input className="input mt-2" value={form.price} onChange={(e) => update("price", e.target.value)} required placeholder="$150 or $10/mo" />
+            <input className="input mt-2" value={form.price} onChange={(e) => update("price", e.target.value)} required placeholder="$150 or $19.99/mo" />
           </label>
         </div>
         <label className="mt-4 block text-sm">Pitch

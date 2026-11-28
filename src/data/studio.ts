@@ -187,7 +187,7 @@ export const SERVICES: Service[] = [
     slug: "premium-managed-bot-hosting",
     name: "Managed Bot Hosting",
     group: "Host",
-    price: "$5/mo",
+    price: "$9.99/mo",
     pitch:
       "Bots are not websites. They need a persistent socket, isolated RAM, and a process supervisor that comes back up without you. We run Discord and Telegram workloads on dedicated resources with token-safe config and daily state backups.",
     deliverables: [
@@ -203,7 +203,7 @@ export const SERVICES: Service[] = [
     slug: "premium-managed-cloud-hosting",
     name: "Managed Cloud Hosting",
     group: "Host",
-    price: "$10/mo",
+    price: "$19.99/mo",
     pitch:
       "We take the box, the TLS, the backups, and the updates. Global CDN in front, daily snapshots behind, firewall and patch cadence in between. Built for the sites and apps we design — or for ones you already have.",
     deliverables: [
@@ -779,7 +779,7 @@ export const PIPELINE = [
   {
     n: "04",
     title: "Deploy",
-    body: "TLS, backups, first week of traffic covered. Site hosting $10/mo, bot hosting $5/mo, or we hand you the repo and the runbook. We do not disappear on launch day.",
+    body: "TLS, backups, first week of traffic covered. Site hosting $19.99/mo, bot hosting $9.99/mo, or we hand you the repo and the runbook. We do not disappear on launch day.",
   },
 ];
 
@@ -798,7 +798,7 @@ export const BILLING = [
   {
     title: "Retainer",
     tag: "Monthly",
-    body: "Hosting, bots, and a block of hours after launch. Catalog hosting is $10/mo for sites, $5/mo for bots; retainers add a named hour block.",
+    body: "Hosting, bots, and a block of hours after launch. Catalog hosting is $19.99/mo for sites, $9.99/mo for bots; retainers add a named hour block.",
     includes: [
       "Managed cloud or bot hosting",
       "Scheduled updates",
@@ -880,7 +880,7 @@ export const FAQS = [
   },
   {
     q: "Are these prices final?",
-    a: "Yes — these are final prices, not starting points. Web design $375, web development $625, custom Discord or Telegram bot $49.50, landing page $75, managed site hosting $10/mo. Custom auth, data migrations, or a second language are scoped on top as separate line items — never a surprise invoice for the listed job.",
+    a: "Yes — these are final prices, not starting points. Web design $375, web development $625, custom Discord or Telegram bot $49.50, landing page $75, managed site hosting $19.99/mo. Custom auth, data migrations, or a second language are scoped on top as separate line items — never a surprise invoice for the listed job.",
   },
   {
     q: "Where are you?",

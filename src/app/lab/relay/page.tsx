@@ -13,7 +13,7 @@ function reply(input: string): string {
   if (/\b(hour|open|close|when|desk)\b/.test(t))
     return `The desk is on ${STUDIO.hours}, ${STUDIO.timezone}. First reply within 24h on weekdays.`;
   if (/\b(price|cost|much|rate|pricing)\b/.test(t))
-    return "Catalog prices: web design $375, web development $625, a custom Discord or Telegram bot $49.50, landing page $75, site hosting $10/mo, bot hosting $5/mo. Full catalog on /services.";
+    return "Catalog prices: web design $375, web development $625, a custom Discord or Telegram bot $49.50, landing page $75, site hosting $19.99/mo, bot hosting $9.99/mo. Full catalog on /services.";
   if (/\b(service|menu|offer|what.*(do|sell)|bot|website|hosting|seo)\b/.test(t))
     return "We do four groups: Build (sites, apps, APIs), Automate (Discord & Telegram bots), Host (managed site and bot hosting), Amplify (SEO, marketing, photo/video). Which lane are you after?";
   if (/\b(human|juan|talk|brief|start|hire|project)\b/.test(t))
